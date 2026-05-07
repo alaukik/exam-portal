@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Super Admin — Exam Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:10px; padding:24px; width:100%; max-width:440px; margin:16px; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .modal-title { font-size:15px; font-weight:700; color:var(--text); margin:0; }
+    .modal-close { background:none; border:none; cursor:pointer; color:var(--text-sub); display:flex; }
+    .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+    /* Tabs */
+    .tabs { display:flex; gap:2px; border-bottom:2px solid var(--border); margin-bottom:20px; overflow-x:auto; }
+    .tab { padding:10px 18px; font-size:13px; font-weight:500; color:var(--text-sub); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+    .tab.active { color:var(--navy); border-bottom-color:var(--navy); font-weight:600; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    /* Import result */
+    .import-result { padding:14px; border-radius:6px; font-size:13px; margin-top:12px; display:none; }
+    /* Grid */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-title">
+      <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;margin-right:6px">school</span>
+      Exam Portal
+    </div>
+    <div class="brand-sub">Super Admin</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showTab('supervisors')">
+      <span class="material-symbols-outlined">verified_user</span> Supervisors
+    </div>
+    <div class="nav-item" onclick="showTab('correctors')">
+      <span class="material-symbols-outlined">draw</span> Correctors
+    </div>
+    <div class="nav-item" onclick="showTab('users')">
+      <span class="material-symbols-outlined">manage_accounts</span> Users
+    </div>
+    <div class="nav-item" onclick="showTab('branches')">
+      <span class="material-symbols-outlined">location_city</span> Branches
+    </div>
+    <div class="nav-item" onclick="showTab('ratecards')">
+      <span class="material-symbols-outlined">payments</span> Rate Cards
+    </div>
+    <div class="nav-item" onclick="showTab('erp')">
+      <span class="material-symbols-outlined">upload_file</span> ERP Import
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">SA</div>
+      <div class="sidebar-user-info">
+        <div class="user-name" id="sidebarName">Loading...</div>
+        <div class="user-role">Super Admin</div>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px" onclick="authLogout()">
+      <span class="material-symbols-outlined">logout</span> Sign out
+    </button>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Supervisors</div>
+    <div class="topbar-right">
+      <div class="btn-icon" title="Refresh" onclick="loadCurrentTab()">
+        <span class="material-symbols-outlined">refresh</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-content">
+
+    <!-- ── SUPERVISORS TAB ── -->
+    <div class="tab-content active" id="tab-supervisors">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">verified_user</span> Supervisors</h2>
+          <button class="btn btn-primary btn-sm" onclick="openSupervisorModal()">
+            <span class="material-symbols-outlined">add</span> Add Supervisor
+          </button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table id="supervisorsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Branch</th>
+                  <th>Rate/Hour (₹)</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="supervisorsBody">
+                <tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CORRECTORS TAB ── -->
+    <div class="tab-content" id="tab-correctors">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">draw</span> Paper Correctors</h2>
+          <button class="btn btn-primary btn-sm" onclick="openCorrectorModal()">
+            <span class="material-symbols-outlined">add</span> Add Corrector
+          </button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table id="correctorsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="correctorsBody">
+                <tr><td colspan="4"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USERS TAB ── -->
+    <div class="tab-content" id="tab-users">
+      <div class="alert alert-info">
+        <span class="material-symbols-outlined">info</span>
+        <div>To add a new user: first create their account in <strong>Supabase → Authentication → Users</strong>, then add their details here with the UUID from that account.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">manage_accounts</span> Users</h2>
+          <button class="btn btn-primary btn-sm" onclick="openUserModal()">
+            <span class="material-symbols-outlined">add</span> Add User
+          </button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Branch</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BRANCHES TAB ── -->
+    <div class="tab-content" id="tab-branches">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">location_city</span> Branches</h2>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Branch Name</th><th>Code</th><th>Status</th></tr>
+              </thead>
+              <tbody id="branchesBody">
+                <tr><td colspan="3"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RATE CARDS TAB ── -->
+    <div class="tab-content" id="tab-ratecards">
+      <div class="alert alert-info">
+        <span class="material-symbols-outlined">info</span>
+        <div>These rates are used to auto-calculate corrector remuneration. Rate = Papers received × Section marks × Rate per mark.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">payments</span> Correction Rate Cards</h2>
+          <button class="btn btn-primary btn-sm" onclick="saveRateCards()">
+            <span class="material-symbols-outlined">save</span> Save Rates
+          </button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Board</th><th>Marks Range</th><th>Rate per Mark (₹)</th></tr>
+              </thead>
+              <tbody id="rateCardsBody">
+                <tr><td colspan="3"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ERP IMPORT TAB ── -->
+    <div class="tab-content" id="tab-erp">
+      <div class="card" style="max-width:600px">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">upload_file</span> ERP CSV Import</h2>
+        </div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--text-sub);margin:0 0 16px">
+            Upload the weekly CSV export from ERP. The system will import new exam records and skip any duplicates automatically.
+          </p>
+
+          <!-- Upload area -->
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvFile').click()">
+            <span class="material-symbols-outlined">upload_file</span>
+            <p><strong>Click to select CSV file</strong></p>
+            <p>or drag and drop here</p>
+            <p style="font-size:11px;margin-top:8px">Supported format: .CSV</p>
+          </div>
+          <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleFileSelect(event)"/>
+
+          <!-- Selected file info -->
+          <div id="fileInfo" style="display:none;margin-top:12px;padding:10px 14px;background:var(--navy-light);border-radius:6px;font-size:13px;">
+            <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;color:var(--navy)">description</span>
+            <span id="fileName" style="margin-left:6px;font-weight:500"></span>
+            <span id="fileRows" style="color:var(--text-sub);margin-left:8px"></span>
+          </div>
+
+          <!-- Import button -->
+          <button class="btn btn-primary" id="importBtn" style="width:100%;margin-top:16px;display:none" onclick="runImport()">
+            <span class="material-symbols-outlined">play_arrow</span> Start Import
+          </button>
+
+          <!-- Result -->
+          <div class="import-result" id="importResult"></div>
+        </div>
+      </div>
+
+      <!-- Import history -->
+      <div class="card" style="max-width:600px">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">history</span> Import History</h2>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Date</th><th>File</th><th>Imported</th><th>Skipped</th></tr>
+              </thead>
+              <tbody id="importHistoryBody">
+                <tr><td colspan="4"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>No imports yet</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end page-content -->
+</div><!-- end main-content -->
+
+<!-- Mobile nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <div class="mobile-nav-item active" onclick="showTab('supervisors')">
+      <span class="material-symbols-outlined">verified_user</span>
+      <span>Supervisors</span>
+    </div>
+    <div class="mobile-nav-item" onclick="showTab('correctors')">
+      <span class="material-symbols-outlined">draw</span>
+      <span>Correctors</span>
+    </div>
+    <div class="mobile-nav-item" onclick="showTab('users')">
+      <span class="material-symbols-outlined">manage_accounts</span>
+      <span>Users</span>
+    </div>
+    <div class="mobile-nav-item" onclick="showTab('erp')">
+      <span class="material-symbols-outlined">upload_file</span>
+      <span>Import</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ── SUPERVISOR MODAL ── -->
+<div class="modal-overlay" id="supervisorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="supervisorModalTitle">Add Supervisor</h3>
+      <button class="modal-close" onclick="closeModal('supervisorModal')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <input type="hidden" id="supId"/>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="supName" placeholder="e.g. Ramesh Kumar"/>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="supPhone" placeholder="+91 98765 43210"/>
+      </div>
+      <div class="form-group">
+        <label>Rate per Hour (₹) *</label>
+        <input type="number" id="supRate" placeholder="0.00" step="0.01"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Branch</label>
+      <select id="supBranch">
+        <option value="">— Select branch —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="supActive">
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('supervisorModal')">Cancel</button>
+      <button class="btn btn-primary" id="supSaveBtn" onclick="saveSupervisorForm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CORRECTOR MODAL ── -->
+<div class="modal-overlay" id="correctorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="correctorModalTitle">Add Corrector</h3>
+      <button class="modal-close" onclick="closeModal('correctorModal')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <input type="hidden" id="corId"/>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="corName" placeholder="e.g. Anjali Mehta"/>
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="text" id="corPhone" placeholder="+91 98765 43210"/>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="corActive">
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('correctorModal')">Cancel</button>
+      <button class="btn btn-primary" id="corSaveBtn" onclick="saveCorrectorForm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── USER MODAL ── -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="userModalTitle">Add User</h3>
+      <button class="modal-close" onclick="closeModal('userModal')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <input type="hidden" id="userId"/>
+    <div class="form-group">
+      <label>Supabase Auth UUID *</label>
+      <input type="text" id="userAuthId" placeholder="Paste UUID from Supabase Auth"/>
+    </div>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="userName" placeholder="e.g. Priya Sharma"/>
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="userEmail" placeholder="priya@example.com"/>
+    </div>
+    <div class="form-group">
+      <label>Role *</label>
+      <select id="userRole" onchange="toggleBranchField()">
+        <option value="">— Select role —</option>
+        <option value="branch_admin">Branch Admin</option>
+        <option value="management">Management</option>
+        <option value="super_admin">Super Admin</option>
+      </select>
+    </div>
+    <div class="form-group" id="branchField">
+      <label>Branch * (required for Branch Admin)</label>
+      <select id="userBranch">
+        <option value="">— Select branch —</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn btn-primary" id="userSaveBtn" onclick="saveUserForm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-helpers.js"></script>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let currentTab   = 'supervisors';
+let allBranches  = [];
+let csvParsed    = [];
+let csvFilename  = '';
+let currentUser  = null;
+
+// ── Init ──────────────────────────────────────────────────────
+(async () => {
+  const profile = await requireRole('super_admin');
+  if (!profile) return;
+  currentUser = profile;
+  document.getElementById('sidebarName').textContent = profile.name;
+  document.getElementById('sidebarAvatar').textContent =
+    profile.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+
+  allBranches = await getBranches();
+  populateBranchDropdowns();
+  await loadSupervisors();
+})();
+
+// ── Tab switching ─────────────────────────────────────────────
+function showTab(tab) {
+  currentTab = tab;
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+
+  // Show selected
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  // Update topbar title
+  const titles = {
+    supervisors: 'Supervisors',
+    correctors:  'Paper Correctors',
+    users:       'Users',
+    branches:    'Branches',
+    ratecards:   'Rate Cards',
+    erp:         'ERP Import',
+  };
+  document.getElementById('topbarTitle').textContent = titles[tab] || tab;
+
+  // Mark active nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick').includes(tab)) n.classList.add('active');
+  });
+  document.querySelectorAll('.mobile-nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(tab)) n.classList.add('active');
+  });
+
+  loadCurrentTab();
+}
+
+async function loadCurrentTab() {
+  try {
+    if (currentTab === 'supervisors') await loadSupervisors();
+    if (currentTab === 'correctors')  await loadCorrectors();
+    if (currentTab === 'users')       await loadUsers();
+    if (currentTab === 'branches')    await loadBranches();
+    if (currentTab === 'ratecards')   await loadRateCards();
+    if (currentTab === 'erp')         await loadImportHistory();
+  } catch(e) {
+    showToast('Error loading data: ' + e.message, 'error');
+  }
+}
+
+// ── Branch dropdowns ──────────────────────────────────────────
+function populateBranchDropdowns() {
+  const opts = allBranches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('supBranch').innerHTML   = '<option value="">— Select branch —</option>' + opts;
+  document.getElementById('userBranch').innerHTML  = '<option value="">— Select branch —</option>' + opts;
+}
+
+// ── SUPERVISORS ───────────────────────────────────────────────
+async function loadSupervisors() {
+  const sups = await getSupervisors(false);
+  const tbody = document.getElementById('supervisorsBody');
+  if (!sups.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">person_off</span><p>No supervisors yet</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sups.map(s => `
+    <tr>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.phone || '—'}</td>
+      <td>${s.branches?.name || '—'}</td>
+      <td>₹ ${parseFloat(s.rate_per_hour).toFixed(2)}</td>
+      <td><span class="badge ${s.is_active ? 'badge-complete' : 'badge-pending'}">${s.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openSupervisorModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deactivateSupervisor('${s.id}','${s.name}')">
+          <span class="material-symbols-outlined">person_off</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openSupervisorModal(sup = null) {
+  document.getElementById('supId').value     = sup?.id || '';
+  document.getElementById('supName').value   = sup?.name || '';
+  document.getElementById('supPhone').value  = sup?.phone || '';
+  document.getElementById('supRate').value   = sup?.rate_per_hour || '';
+  document.getElementById('supBranch').value = sup?.branch_id || '';
+  document.getElementById('supActive').value = sup?.is_active === false ? 'false' : 'true';
+  document.getElementById('supervisorModalTitle').textContent = sup ? 'Edit Supervisor' : 'Add Supervisor';
+  document.getElementById('supervisorModal').classList.add('open');
+}
+
+async function saveSupervisorForm() {
+  const name = document.getElementById('supName').value.trim();
+  const rate = document.getElementById('supRate').value;
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (!rate)  { showToast('Rate per hour is required', 'error'); return; }
+
+  const btn = document.getElementById('supSaveBtn');
+  setLoading(btn, true);
+  try {
+    await saveSupervisor({
+      id:           document.getElementById('supId').value || undefined,
+      name,
+      phone:        document.getElementById('supPhone').value.trim(),
+      branch_id:    document.getElementById('supBranch').value || null,
+      rate_per_hour:parseFloat(rate),
+      is_active:    document.getElementById('supActive').value === 'true',
+    });
+    closeModal('supervisorModal');
+    showToast('Supervisor saved successfully', 'success');
+    await loadSupervisors();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+  setLoading(btn, false, 'Save');
+}
+
+async function deactivateSupervisor(id, name) {
+  if (!confirm(`Mark "${name}" as inactive?`)) return;
+  try {
+    await deleteSupervisor(id);
+    showToast('Supervisor marked inactive', 'success');
+    await loadSupervisors();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ── CORRECTORS ────────────────────────────────────────────────
+async function loadCorrectors() {
+  const cors = await getCorrectors(false);
+  const tbody = document.getElementById('correctorsBody');
+  if (!cors.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><span class="material-symbols-outlined">draw</span><p>No correctors yet</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = cors.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.phone || '—'}</td>
+      <td><span class="badge ${c.is_active ? 'badge-complete' : 'badge-pending'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openCorrectorModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deactivateCorrector('${c.id}','${c.name}')">
+          <span class="material-symbols-outlined">person_off</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openCorrectorModal(cor = null) {
+  document.getElementById('corId').value     = cor?.id || '';
+  document.getElementById('corName').value   = cor?.name || '';
+  document.getElementById('corPhone').value  = cor?.phone || '';
+  document.getElementById('corActive').value = cor?.is_active === false ? 'false' : 'true';
+  document.getElementById('correctorModalTitle').textContent = cor ? 'Edit Corrector' : 'Add Corrector';
+  document.getElementById('correctorModal').classList.add('open');
+}
+
+async function saveCorrectorForm() {
+  const name = document.getElementById('corName').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+
+  const btn = document.getElementById('corSaveBtn');
+  setLoading(btn, true);
+  try {
+    await saveCorrector({
+      id:       document.getElementById('corId').value || undefined,
+      name,
+      phone:    document.getElementById('corPhone').value.trim(),
+      is_active:document.getElementById('corActive').value === 'true',
+    });
+    closeModal('correctorModal');
+    showToast('Corrector saved successfully', 'success');
+    await loadCorrectors();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+  setLoading(btn, false, 'Save');
+}
+
+async function deactivateCorrector(id, name) {
+  if (!confirm(`Mark "${name}" as inactive?`)) return;
+  try {
+    await deleteCorrector(id);
+    showToast('Corrector marked inactive', 'success');
+    await loadCorrectors();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ── USERS ─────────────────────────────────────────────────────
+async function loadUsers() {
+  const users = await getUsers();
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">group</span><p>No users yet</p></div></td></tr>`;
+    return;
+  }
+  const roleLabels = { super_admin: 'Super Admin', branch_admin: 'Branch Admin', management: 'Management' };
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td style="font-size:12px">${u.email}</td>
+      <td><span class="badge badge-navy">${roleLabels[u.role] || u.role}</span></td>
+      <td>${u.branches?.name || '—'}</td>
+      <td><span class="badge ${u.is_active ? 'badge-complete' : 'badge-pending'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openUserModal(user = null) {
+  document.getElementById('userId').value    = user?.id || '';
+  document.getElementById('userAuthId').value= user?.id || '';
+  document.getElementById('userName').value  = user?.name || '';
+  document.getElementById('userEmail').value = user?.email || '';
+  document.getElementById('userRole').value  = user?.role || '';
+  document.getElementById('userBranch').value= user?.branch_id || '';
+  document.getElementById('userModalTitle').textContent = user ? 'Edit User' : 'Add User';
+  if (user) document.getElementById('userAuthId').readOnly = true;
+  else document.getElementById('userAuthId').readOnly = false;
+  toggleBranchField();
+  document.getElementById('userModal').classList.add('open');
+}
+
+function toggleBranchField() {
+  const role = document.getElementById('userRole').value;
+  document.getElementById('branchField').style.display = role === 'branch_admin' ? 'block' : 'none';
+}
+
+async function saveUserForm() {
+  const name  = document.getElementById('userName').value.trim();
+  const email = document.getElementById('userEmail').value.trim();
+  const role  = document.getElementById('userRole').value;
+  const authId= document.getElementById('userAuthId').value.trim();
+  const branch= document.getElementById('userBranch').value;
+
+  if (!name || !email || !role || !authId) { showToast('Please fill all required fields', 'error'); return; }
+  if (role === 'branch_admin' && !branch)  { showToast('Branch is required for Branch Admin', 'error'); return; }
+
+  const btn = document.getElementById('userSaveBtn');
+  setLoading(btn, true);
+  try {
+    const existingId = document.getElementById('userId').value;
+    if (existingId) {
+      await updateUser(existingId, { name, role, branch_id: branch || null });
+    } else {
+      await createUser({ auth_id: authId, name, email, role, branch_id: branch || null });
+    }
+    closeModal('userModal');
+    showToast('User saved successfully', 'success');
+    await loadUsers();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+  setLoading(btn, false, 'Save');
+}
+
+// ── BRANCHES ──────────────────────────────────────────────────
+async function loadBranches() {
+  const branches = await getBranches();
+  const tbody = document.getElementById('branchesBody');
+  if (!branches.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>No branches found</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = branches.map(b => `
+    <tr>
+      <td><strong>${b.name}</strong></td>
+      <td><span class="badge badge-navy">${b.code}</span></td>
+      <td><span class="badge badge-complete">Active</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── RATE CARDS ────────────────────────────────────────────────
+let rateCardsData = [];
+
+async function loadRateCards() {
+  rateCardsData = await getRateCards();
+  const tbody = document.getElementById('rateCardsBody');
+  const marksLabel = (upto) => upto >= 999 ? '60 and above' : `Up to ${upto}`;
+  tbody.innerHTML = rateCardsData.map(r => `
+    <tr>
+      <td><strong>${r.board_type === 'CBSE_ICSE' ? 'CBSE / ICSE' : 'SSC (EM / SE)'}</strong></td>
+      <td>${marksLabel(r.marks_upto)}</td>
+      <td>
+        <input type="number" step="0.0001" value="${r.rate_per_mark}"
+          id="rate_${r.id}" style="width:100px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px"/>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function saveRateCards() {
+  try {
+    for (const r of rateCardsData) {
+      const val = parseFloat(document.getElementById('rate_' + r.id).value);
+      if (!isNaN(val) && val !== parseFloat(r.rate_per_mark)) {
+        await updateRateCard(r.id, val);
+      }
+    }
+    showToast('Rate cards saved', 'success');
+    await loadRateCards();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ── ERP IMPORT ────────────────────────────────────────────────
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  csvFilename = file.name;
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: (results) => {
+      csvParsed = results.data;
+      document.getElementById('fileInfo').style.display = 'block';
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileRows').textContent = `(${csvParsed.length} rows found)`;
+      document.getElementById('importBtn').style.display = 'flex';
+
+      // Validate columns
+      const required = ['ExamName','Batch','Branch','SubjectOnly','examDate','startTime','toTime','Standard','Medium'];
+      const headers  = results.meta.fields || [];
+      const missing  = required.filter(c => !headers.includes(c));
+      if (missing.length) {
+        showToast('Missing columns: ' + missing.join(', '), 'error');
+        document.getElementById('importBtn').style.display = 'none';
+      }
+    },
+    error: () => showToast('Could not read CSV file', 'error'),
+  });
+}
+
+// Drag and drop
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    document.getElementById('csvFile').files = e.dataTransfer.files;
+    handleFileSelect({ target: { files: [file] } });
+  } else {
+    showToast('Please drop a .csv file', 'error');
+  }
+});
+
+async function runImport() {
+  if (!csvParsed.length) { showToast('No data to import', 'error'); return; }
+  const btn = document.getElementById('importBtn');
+  setLoading(btn, true, 'Start Import');
+
+  // Map CSV columns to our field names
+  const rows = csvParsed.map(row => ({
+    exam_ref:        row.ExamName,
+    batch:           row.Batch,
+    branch_name:     row.Branch,
+    subject:         row.SubjectOnly,
+    exam_date:       row.examDate,
+    from_time:       row.startTime,
+    to_time:         row.toTime,
+    erp_status:      row.AcStatus,
+    standard:        row.Standard,
+    medium:          row.Medium,
+    students_present:row.numberOfStudent,
+  }));
+
+  try {
+    const result = await importERPRows(rows, csvFilename, currentUser.id);
+    const el = document.getElementById('importResult');
+    el.style.display = 'block';
+    if (result.imported > 0) {
+      el.className = 'import-result alert alert-success';
+      el.innerHTML = `<span class="material-symbols-outlined">check_circle</span>
+        <div><strong>Import complete.</strong> ${result.imported} records imported, ${result.skipped} skipped (duplicates or errors).</div>`;
+      showToast(`Imported ${result.imported} records`, 'success');
+    } else {
+      el.className = 'import-result alert alert-warning';
+      el.innerHTML = `<span class="material-symbols-outlined">warning</span>
+        <div>No new records imported. ${result.skipped} rows were duplicates or had errors.</div>`;
+    }
+    await loadImportHistory();
+  } catch(e) {
+    showToast('Import failed: ' + e.message, 'error');
+  }
+  setLoading(btn, false, '<span class="material-symbols-outlined">play_arrow</span> Start Import');
+}
+
+async function loadImportHistory() {
+  try {
+    const history = await getImportHistory();
+    const tbody = document.getElementById('importHistoryBody');
+    if (!history.length) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>No imports yet</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = history.map(h => `
+      <tr>
+        <td style="font-size:12px">${fmtDate(h.imported_on)}</td>
+        <td style="font-size:12px">${h.filename}</td>
+        <td><span class="badge badge-complete">${h.rows_imported}</span></td>
+        <td><span class="badge badge-pending">${h.rows_skipped}</span></td>
+      </tr>
+    `).join('');
+  } catch(e) { /* ignore */ }
+}
+
+// ── Modal helpers ─────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+</script>
+
+</body>
+</html>
