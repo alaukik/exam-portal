@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Exam Portal</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <!-- Our styles -->
+  <link rel="stylesheet" href="css/styles.css"/>
+
+  <style>
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+    .login-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 36px 32px; width: 100%; max-width: 380px; }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .logo-icon { width: 52px; height: 52px; background: var(--navy); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .logo-icon .material-symbols-outlined { color: white; font-size: 28px; }
+    .login-logo h1 { font-size: 20px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+    .login-logo p { font-size: 12px; color: var(--text-sub); margin: 0; }
+    .login-error { background: var(--red-light); color: var(--red); padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .btn-login { width: 100%; padding: 10px; background: var(--navy); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-login:hover { background: var(--navy-dark); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .form-group input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; transition: border-color 0.15s; }
+    .form-group input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,60,110,0.08); }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 40px; }
+    .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-sub); padding: 0; display: flex; align-items: center; }
+    .pw-toggle .material-symbols-outlined { font-size: 18px; }
+  </style>
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="logo-icon">
+        <span class="material-symbols-outlined">school</span>
+      </div>
+      <h1>Exam Portal</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <!-- Error message -->
+    <div class="login-error" id="loginError"></div>
+
+    <!-- Form -->
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"/>
+        <button class="pw-toggle" onclick="togglePassword()" type="button" tabindex="-1">
+          <span class="material-symbols-outlined" id="pwIcon">visibility</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-login" id="loginBtn" onclick="handleLogin()">
+      Sign in
+    </button>
+
+  </div>
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Our JS -->
+<script src="js/config.js"></script>
+<script src="js/supabase-helpers.js"></script>
+
+<script>
+  // ── If already logged in redirect immediately ──────────────
+  (async () => {
+    const session = await getSession();
+    if (session) {
+      const profile = await getMyProfile();
+      if (profile) redirect(profile.role);
+    }
+  })();
+
+  // ── Handle login ───────────────────────────────────────────
+  async function handleLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('loginBtn');
+    const errBox   = document.getElementById('loginError');
+
+    // Basic validation
+    errBox.style.display = 'none';
+    if (!email || !password) {
+      showError('Please enter your email and password.');
+      return;
+    }
+
+    // Set loading
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+    try {
+      const result = await authLogin(email, password);
+      redirect(result.role);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = 'Sign in';
+      showError(getFriendlyError(err.message));
+    }
+  }
+
+  // ── Redirect based on role ─────────────────────────────────
+  function redirect(role) {
+    const page = CONFIG.ROLE_HOME[role];
+    if (page) window.location.href = page;
+    else showError('Your account has no role assigned. Contact your administrator.');
+  }
+
+  // ── Show error ─────────────────────────────────────────────
+  function showError(msg) {
+    const box = document.getElementById('loginError');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  // ── Friendly error messages ────────────────────────────────
+  function getFriendlyError(msg) {
+    if (msg.includes('Invalid login'))    return 'Incorrect email or password. Please try again.';
+    if (msg.includes('Email not confirmed')) return 'Please confirm your email before logging in.';
+    if (msg.includes('too many requests')) return 'Too many attempts. Please wait a few minutes.';
+    return 'Something went wrong. Please try again.';
+  }
+
+  // ── Toggle password visibility ─────────────────────────────
+  function togglePassword() {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('pwIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = 'visibility_off';
+    } else {
+      input.type = 'password';
+      icon.textContent = 'visibility';
+    }
+  }
+
+  // ── Allow Enter key to submit ──────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+
+</body>
+</html>
