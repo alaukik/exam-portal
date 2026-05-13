@@ -36,10 +36,14 @@ async function getSession() {
 }
 
 // Get current user's profile from users table
+
 async function getMyProfile() {
+  const session = await getSession();
+  if (!session) return null;
   const { data, error } = await db
     .from('users')
     .select('id, name, email, role, branch_id, branches(name, code)')
+    .eq('id', session.user.id)
     .single();
   if (error) throw error;
   return data;
