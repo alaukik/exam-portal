@@ -479,12 +479,13 @@ function buildSupOptions() {
   return `<option value="">— Select supervisor —</option>` +
     available.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 }
-
 async function addSup() {
-  const supId = document.getElementById('supSel').value;
+  const supId    = document.getElementById('supSel').value;
+  const classroom= document.getElementById('supClassroom').value.trim();
   if (!supId) { showToast('Select a supervisor first', 'error'); return; }
   try {
-    await addExamSupervisor(detail.id, supId);
+    await addExamSupervisor(detail.id, supId, classroom);
+
     showToast('Supervisor added', 'success');
     detail = await getExamDetail(detail.id);
     document.getElementById('supChips').innerHTML = buildSupChips();
