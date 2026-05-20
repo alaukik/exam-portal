@@ -385,10 +385,14 @@ function renderDetail() {
       </div>
       <div class="section-body">
         <div class="sup-chips" id="supChips">${buildSupChips()}</div>
-        <div class="fg2">
+        <div class="fg3">
           <div class="form-group" style="margin:0">
             <label>Add Supervisor</label>
             <select id="supSel">${buildSupOptions()}</select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Classroom</label>
+            <input type="text" id="supClassroom" placeholder="e.g. Room 101"/>
           </div>
           <div style="display:flex;align-items:flex-end">
             <button class="btn btn-outline btn-sm" onclick="addSup()">
