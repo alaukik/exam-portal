@@ -461,6 +461,7 @@ function buildSupChips() {
     <div class="sup-chip">
       <span class="material-symbols-outlined" style="font-size:13px">person</span>
       ${es.supervisors?.name || ''}
+      ${es.classroom ? `<span style="font-size:11px;opacity:0.8">— ${es.classroom}</span>` : ''}
       <button class="sup-chip-remove" onclick="removeSup('${es.id}','${es.supervisors?.name}')">
         <span class="material-symbols-outlined">close</span>
       </button>
