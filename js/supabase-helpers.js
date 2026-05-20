@@ -410,7 +410,7 @@ async function getExamDetail(examId) {
     .select(`
       *,
       branches(name, code),
-      exam_supervisors(id, supervisors(id, name, phone, rate_per_hour)),
+      exam_supervisors(id, classroom, supervisors(id, name, phone, rate_per_hour)),
       corrector_batches(
         *,
         correctors(id, name, phone),
