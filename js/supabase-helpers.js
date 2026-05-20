@@ -298,7 +298,9 @@ async function importERPRows(rows, filename, uploadedById) {
       
       // Auto-calculate actual hours from CSV times
       const actual_hours = ((parseInt(row.to_time) || 0) - (parseInt(row.from_time) || 0)) / 60;
-
+      // Parse marks (mandatory)
+      const marks = parseInt(row.marks);
+      if (!marks || marks < 1) { skipped++; continue; }
  
       // Parse students present
       const students_present = parseInt(row.students_present) || 0;
@@ -320,6 +322,7 @@ async function importERPRows(rows, filename, uploadedById) {
         erp_status:       row.erp_status || null,
         students_present: students_present > 0 ? students_present : null,
         actual_hours:     actual_hours > 0 ? actual_hours : null,
+        marks,
       };
 
       // Upsert — skip if duplicate (unique key: exam_ref + branch_id + batch)
