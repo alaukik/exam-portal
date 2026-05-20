@@ -801,7 +801,7 @@ function handleFileSelect(event) {
       document.getElementById('importBtn').style.display = 'flex';
 
       // Validate columns
-      const required = ['ExamName','Batch','Branch','SubjectOnly','examDate','startTime','toTime','Standard','Medium'];
+      const required = ['ExamName','Batch','Branch','SubjectOnly','examDate','startTime','toTime','Standard','Medium','Marks'];
       const headers  = results.meta.fields || [];
       const missing  = required.filter(c => !headers.includes(c));
       if (missing.length) {
@@ -847,6 +847,7 @@ async function runImport() {
     standard:        row.Standard,
     medium:          row.Medium,
     students_present:row.numberOfStudent,
+    marks:           row.Marks,
   }));
 
   try {
