@@ -438,16 +438,19 @@ async function updateExam(examId, updates) {
 // EXAM SUPERVISORS
 // ============================================================
 
-async function addExamSupervisor(examId, supervisorId) {
+async function addExamSupervisor(examId, supervisorId, classroom) {
   const { data, error } = await db
     .from('exam_supervisors')
-    .insert({ exam_id: examId, supervisor_id: supervisorId })
+    .insert({ 
+      exam_id: examId, 
+      supervisor_id: supervisorId,
+      classroom: classroom || null,
+    })
     .select('*, supervisors(id, name, phone, rate_per_hour)')
     .single();
   if (error) throw error;
   return data;
 }
-
 async function removeExamSupervisor(examSupervisorId) {
   const { error } = await db
     .from('exam_supervisors')
