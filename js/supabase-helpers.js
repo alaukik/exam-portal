@@ -137,25 +137,47 @@ async function toggleUserActive(id, is_active) {
 // SUPERVISORS
 // ============================================================
 
-async function getSupervisors(activeOnly = true) {
+// Get supervisors with their branch assignments.
+// If branchId is provided — returns only supervisors assigned to that branch.
+// Used by branch admin to see only their branch supervisors.
+async function getSupervisors(activeOnly = true, branchId = null) {
   let query = db
     .from('supervisors')
-    .select('*, branches(name)')
+    .select('*, supervisor_branches(branch_id, branches(name))')
     .order('name');
   if (activeOnly) query = query.eq('is_active', true);
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+
+  // Filter to only supervisors assigned to the given branch
+  if (branchId) {
+    return (data || []).filter(s =>
+      (s.supervisor_branches || []).some(sb => sb.branch_id === branchId)
+    );
+  }
+  return data || [];
 }
 
+// Get all branches assigned to a specific supervisor (for edit form pre-fill)
+async function getSupervisorBranches(supervisorId) {
+  const { data, error } = await db
+    .from('supervisor_branches')
+    .select('branch_id, branches(name)')
+    .eq('supervisor_id', supervisorId);
+  if (error) throw error;
+  return data || [];
+}
+
+// Save supervisor + their branch assignments
 async function saveSupervisor(sup) {
   const payload = {
     name:          sup.name,
     phone:         sup.phone || null,
-    branch_id:     sup.branch_id || null,
     rate_per_hour: parseFloat(sup.rate_per_hour) || 0,
     is_active:     sup.is_active !== false,
   };
+
+  let savedSup;
   if (sup.id) {
     const { data, error } = await db
       .from('supervisors')
@@ -163,18 +185,32 @@ async function saveSupervisor(sup) {
       .eq('id', sup.id)
       .select().single();
     if (error) throw error;
-    return data;
+    savedSup = data;
   } else {
     const { data, error } = await db
       .from('supervisors')
       .insert(payload)
       .select().single();
     if (error) throw error;
-    return data;
+    savedSup = data;
   }
+
+  // Save branch assignments — delete old ones first then insert new
+  await db.from('supervisor_branches').delete().eq('supervisor_id', savedSup.id);
+  if (sup.branch_ids && sup.branch_ids.length > 0) {
+    const rows = sup.branch_ids.map(bid => ({
+      supervisor_id: savedSup.id,
+      branch_id:     bid,
+    }));
+    const { error: brErr } = await db.from('supervisor_branches').insert(rows);
+    if (brErr) throw brErr;
+  }
+
+  return savedSup;
 }
 
 async function deleteSupervisor(id) {
+  // supervisor_branches rows auto-deleted via cascade
   const { error } = await db
     .from('supervisors')
     .update({ is_active: false })
@@ -408,16 +444,12 @@ async function updateExam(examId, updates) {
 // EXAM STATUS — recalculate and save
 // ============================================================
 
-// Called after every batch or distribution change.
-// Reads current state from DB and saves correct status to exams table.
 async function recalcExamStatus(examId) {
-  // Fetch all batches for this exam
   const { data: batches } = await db
     .from('corrector_batches')
     .select('id, is_overdue, return_date')
     .eq('exam_id', examId);
 
-  // Fetch all distributions for batches of this exam
   const batchIds = (batches || []).map(b => b.id);
   let dists = [];
   if (batchIds.length > 0) {
@@ -508,7 +540,6 @@ async function saveCorrectorBatch(batch) {
     data = d;
   }
 
-  // Recalculate and save exam status
   await recalcExamStatus(batch.exam_id);
   return data;
 }
@@ -519,11 +550,9 @@ async function deleteCorrectorBatch(batchId, examId) {
     .delete()
     .eq('id', batchId);
   if (error) throw error;
-  // Recalculate and save exam status
   if (examId) await recalcExamStatus(examId);
 }
 
-// Validate Type A: sum of papers_sent = students_present
 function validateTypeA(batches, studentsPresent) {
   const total = batches
     .filter(b => b.split_type === 'A')
@@ -531,7 +560,6 @@ function validateTypeA(batches, studentsPresent) {
   return total === parseInt(studentsPresent);
 }
 
-// Validate Type B: sum of section_marks = total exam marks
 function validateTypeB(batches, totalMarks) {
   const total = batches
     .filter(b => b.split_type === 'B')
@@ -568,7 +596,6 @@ async function saveDistribution(dist) {
     data = d;
   }
 
-  // Get exam_id from batch and recalculate status
   const { data: batch } = await db
     .from('corrector_batches')
     .select('exam_id')
@@ -585,7 +612,6 @@ async function deleteDistribution(distId, examId) {
     .delete()
     .eq('id', distId);
   if (error) throw error;
-  // Recalculate and save exam status
   if (examId) await recalcExamStatus(examId);
 }
 
