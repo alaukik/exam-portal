@@ -597,6 +597,38 @@ async function getSupervisorRemuneration(filters = {}) {
   return data;
 }
 
+// ── Recalculate and save exam status ─────────────────────────
+async function recalcExamStatus(examId) {
+  // Fetch all batches for this exam
+  const { data: batches } = await db
+    .from('corrector_batches')
+    .select('id, is_overdue, return_date')
+    .eq('exam_id', examId);
+
+  // Fetch all distributions for this exam
+  const { data: dists } = await db
+    .from('distributions')
+    .select('id, batch_id')
+    .in('batch_id', (batches || []).map(b => b.id));
+
+  let status = 'pending';
+
+  if (batches && batches.length > 0) {
+    const anyOverdue    = batches.some(b => b.is_overdue);
+    const allReturned   = batches.every(b => b.return_date);
+    const anyUnreturned = batches.some(b => !b.return_date);
+    const anyDist       = (dists || []).length > 0;
+
+    if (anyOverdue)                    status = 'overdue';
+    else if (allReturned && !anyDist)  status = 'not_distributed';
+    else if (anyUnreturned)            status = 'progress';
+    else if (allReturned && anyDist)   status = 'complete';
+  }
+
+  await db.from('exams').update({ status }).eq('id', examId);
+  return status;
+}
+
 // ============================================================
 // DATE VALIDATION HELPERS
 // ============================================================
