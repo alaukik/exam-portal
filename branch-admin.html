@@ -9,21 +9,24 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <style>
     /* ── Summary cards ── */
-    .summary-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
-    .stat-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:14px 16px; cursor:pointer; transition:box-shadow 0.15s, border-color 0.15s; border-left:3px solid var(--border); }
+    .summary-row { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px; }
+    .stat-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 14px; cursor:pointer; transition:box-shadow 0.15s; border-left:3px solid var(--border); }
     .stat-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-    .stat-card.active { border-left-color:var(--navy); box-shadow:0 0 0 1.5px var(--navy); }
-    .stat-card.c-pending.active  { border-left-color:var(--amber); box-shadow:0 0 0 1.5px var(--amber); }
-    .stat-card.c-overdue.active  { border-left-color:var(--red);   box-shadow:0 0 0 1.5px var(--red);   }
-    .stat-card.c-complete.active { border-left-color:var(--green); box-shadow:0 0 0 1.5px var(--green); }
-    .stat-card.c-pending  { border-left-color:var(--amber); }
-    .stat-card.c-overdue  { border-left-color:var(--red);   }
-    .stat-card.c-complete { border-left-color:var(--green); }
-    .stat-label { font-size:11px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; }
-    .stat-num { font-size:26px; font-weight:700; color:var(--text); line-height:1; }
-    .stat-num.amber { color:var(--amber); }
-    .stat-num.red   { color:var(--red);   }
-    .stat-num.green { color:var(--green); }
+    .stat-card.active { box-shadow:0 0 0 1.5px var(--navy); border-left-color:var(--navy); }
+    .stat-card.c-pending   { border-left-color:var(--amber); }
+    .stat-card.c-overdue   { border-left-color:var(--red);   }
+    .stat-card.c-notdist   { border-left-color:#7c3aed;      }
+    .stat-card.c-complete  { border-left-color:var(--green); }
+    .stat-card.c-pending.active  { box-shadow:0 0 0 1.5px var(--amber);  }
+    .stat-card.c-overdue.active  { box-shadow:0 0 0 1.5px var(--red);    }
+    .stat-card.c-notdist.active  { box-shadow:0 0 0 1.5px #7c3aed;       }
+    .stat-card.c-complete.active { box-shadow:0 0 0 1.5px var(--green);  }
+    .stat-label { font-size:10px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px; }
+    .stat-num { font-size:24px; font-weight:700; color:var(--text); line-height:1; }
+    .stat-num.amber  { color:var(--amber);  }
+    .stat-num.red    { color:var(--red);    }
+    .stat-num.purple { color:#7c3aed;       }
+    .stat-num.green  { color:var(--green);  }
 
     /* ── Filter bar ── */
     .filter-bar { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:14px; }
@@ -32,10 +35,12 @@
     .filter-section-label { font-size:11px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.3px; margin-right:2px; white-space:nowrap; }
     .chip { padding:4px 12px; border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-sub); background:var(--white); cursor:pointer; transition:all 0.1s; white-space:nowrap; }
     .chip:hover { background:var(--grey-light); }
-    .chip.active { background:var(--navy-light); color:var(--navy); border-color:var(--navy); font-weight:600; }
-    .chip.overdue.active { background:var(--red-light); color:var(--red); border-color:var(--red); }
-    .chip.pending.active { background:var(--amber-light); color:var(--amber); border-color:var(--amber); }
-    .chip.complete.active { background:var(--green-light); color:var(--green); border-color:var(--green); }
+    .chip.active          { background:var(--navy-light);  color:var(--navy);  border-color:var(--navy);  font-weight:600; }
+    .chip.c-pending.active  { background:var(--amber-light); color:var(--amber); border-color:var(--amber); }
+    .chip.c-progress.active { background:#fef3e2;            color:var(--amber); border-color:var(--amber); }
+    .chip.c-overdue.active  { background:var(--red-light);   color:var(--red);   border-color:var(--red);   }
+    .chip.c-notdist.active  { background:#ede9fe;            color:#7c3aed;      border-color:#7c3aed;      }
+    .chip.c-complete.active { background:var(--green-light); color:var(--green); border-color:var(--green); }
     .filter-divider { width:1px; height:20px; background:var(--border); margin:0 4px; flex-shrink:0; }
     .filter-select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
     .filter-search { padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; width:200px; }
@@ -62,8 +67,10 @@
     .exam-table tbody td.ref-col { font-size:11px; color:var(--text-sub); max-width:140px; overflow:hidden; text-overflow:ellipsis; }
     .no-exams { text-align:center; padding:32px; color:var(--text-sub); font-size:13px; }
 
+    /* ── Not distributed badge ── */
+    .badge-notdist { background:#ede9fe; color:#7c3aed; }
+
     /* ── Detail panel ── */
-    .exam-detail-panel { background:var(--bg); }
     .detail-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; color:var(--text-sub); text-align:center; background:var(--white); border:1px solid var(--border); border-radius:8px; }
     .detail-placeholder .material-symbols-outlined { font-size:40px; color:var(--border); margin-bottom:10px; }
 
@@ -111,16 +118,9 @@
     .val-msg.ok  { background:var(--green-light); color:var(--green); }
 
     /* ── Responsive ── */
-    @media(max-width:900px) {
-      .summary-row { grid-template-columns:repeat(2,1fr); }
-      .fg3 { grid-template-columns:1fr 1fr; }
-    }
-    @media(max-width:600px) {
-      .summary-row { grid-template-columns:repeat(2,1fr); }
-      .fg3, .fg2 { grid-template-columns:1fr; }
-      .page-content { padding:12px; }
-      .filter-search { width:140px; }
-    }
+    @media(max-width:1000px) { .summary-row { grid-template-columns:repeat(3,1fr); } }
+    @media(max-width:700px)  { .summary-row { grid-template-columns:repeat(2,1fr); } .fg3 { grid-template-columns:1fr 1fr; } }
+    @media(max-width:500px)  { .fg3, .fg2 { grid-template-columns:1fr; } .page-content { padding:12px; } .filter-search { width:140px; } }
   </style>
 </head>
 <body>
@@ -166,10 +166,10 @@
 
   <div class="page-content">
 
-    <!-- Summary cards -->
+    <!-- ── 5 Summary cards ── -->
     <div class="summary-row">
       <div class="stat-card active" id="card-all" onclick="filterByCard('all')">
-        <div class="stat-label">Total exams</div>
+        <div class="stat-label">Total</div>
         <div class="stat-num" id="cnt-all">—</div>
       </div>
       <div class="stat-card c-pending" id="card-pending" onclick="filterByCard('pending')">
@@ -180,22 +180,26 @@
         <div class="stat-label">Overdue</div>
         <div class="stat-num red" id="cnt-overdue">—</div>
       </div>
+      <div class="stat-card c-notdist" id="card-not_distributed" onclick="filterByCard('not_distributed')">
+        <div class="stat-label">Not Distributed</div>
+        <div class="stat-num purple" id="cnt-not_distributed">—</div>
+      </div>
       <div class="stat-card c-complete" id="card-complete" onclick="filterByCard('complete')">
         <div class="stat-label">Complete</div>
         <div class="stat-num green" id="cnt-complete">—</div>
       </div>
     </div>
 
-    <!-- Filter bar -->
+    <!-- ── Filter bar ── -->
     <div class="filter-bar">
-      <!-- Row 1: Status chips + search -->
       <div class="filter-row-1">
         <span class="filter-section-label">Status</span>
-        <span class="chip active" id="chip-all"      onclick="setStatusChip('all')">All</span>
-        <span class="chip pending" id="chip-pending" onclick="setStatusChip('pending')">Pending</span>
-        <span class="chip" id="chip-progress"        onclick="setStatusChip('progress')">In Progress</span>
-        <span class="chip overdue" id="chip-overdue" onclick="setStatusChip('overdue')">Overdue</span>
-        <span class="chip complete" id="chip-complete" onclick="setStatusChip('complete')">Complete</span>
+        <span class="chip active"             id="chip-all"              onclick="setStatusChip('all')">All</span>
+        <span class="chip c-pending"          id="chip-pending"          onclick="setStatusChip('pending')">Pending</span>
+        <span class="chip c-progress"         id="chip-progress"         onclick="setStatusChip('progress')">In Progress</span>
+        <span class="chip c-overdue"          id="chip-overdue"          onclick="setStatusChip('overdue')">Overdue</span>
+        <span class="chip c-notdist"          id="chip-not_distributed"  onclick="setStatusChip('not_distributed')">Not Distributed</span>
+        <span class="chip c-complete"         id="chip-complete"         onclick="setStatusChip('complete')">Complete</span>
         <div class="filter-divider"></div>
         <input class="filter-search" type="text" id="fSearch" placeholder="Search subject or exam..." oninput="applyFilters()"/>
         <button class="btn-clear-filters" onclick="clearAllFilters()">
@@ -203,7 +207,6 @@
           Clear
         </button>
       </div>
-      <!-- Row 2: Dropdowns -->
       <div class="filter-row-2">
         <span class="filter-section-label">Filter</span>
         <select class="filter-select" id="fStd" onchange="applyFilters()">
@@ -239,7 +242,7 @@
       </div>
     </div>
 
-    <!-- Exam table -->
+    <!-- ── Exam table ── -->
     <div class="exam-table-wrap">
       <div class="exam-table-header">
         <span class="exam-table-title">Exams</span>
@@ -269,7 +272,7 @@
       </div>
     </div>
 
-    <!-- Exam detail -->
+    <!-- ── Exam detail ── -->
     <div id="detailPanel">
       <div class="detail-placeholder">
         <span class="material-symbols-outlined">touch_app</span>
@@ -308,7 +311,17 @@ let selectedId   = null;
 let detail       = null;
 let supervisors  = [];
 let correctors   = [];
-let activeStatus = 'all'; // tracks which card/chip is active
+let activeStatus = 'all';
+
+// ── Status config — single source of truth ────────────────────
+const STATUS = {
+  all:              { label:'All',              chipCls:'',           cardId:'all',              badgeCls:'',                numCls:''       },
+  pending:          { label:'Pending',          chipCls:'c-pending',  cardId:'pending',          badgeCls:'badge-pending',   numCls:'amber'  },
+  progress:         { label:'In Progress',      chipCls:'c-progress', cardId:'all',              badgeCls:'badge-progress',  numCls:''       },
+  overdue:          { label:'Overdue',          chipCls:'c-overdue',  cardId:'overdue',          badgeCls:'badge-overdue',   numCls:'red'    },
+  not_distributed:  { label:'Not Distributed',  chipCls:'c-notdist',  cardId:'not_distributed',  badgeCls:'badge-notdist',   numCls:'purple' },
+  complete:         { label:'Complete',         chipCls:'c-complete', cardId:'complete',         badgeCls:'badge-complete',  numCls:'green'  },
+};
 
 // ─────────────────────────────────────────────────────────────
 // INIT
@@ -334,7 +347,6 @@ let activeStatus = 'all'; // tracks which card/chip is active
 async function loadExams() {
   try {
     allExams = await getExams({});
-    allExams.forEach(e => { e._status = 'pending'; });
     populateBatchDropdown();
     updateSummaryCards();
     applyFilters();
@@ -345,47 +357,52 @@ async function loadExams() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// SUMMARY CARDS
+// SUMMARY CARDS — read status directly from DB
 // ─────────────────────────────────────────────────────────────
 function updateSummaryCards() {
-  const total    = allExams.length;
-  const pending  = allExams.filter(e => e._status === 'pending').length;
-  const overdue  = allExams.filter(e => e._status === 'overdue').length;
-  const complete = allExams.filter(e => e._status === 'complete').length;
-
-  document.getElementById('cnt-all').textContent     = total;
-  document.getElementById('cnt-pending').textContent  = pending;
-  document.getElementById('cnt-overdue').textContent  = overdue;
-  document.getElementById('cnt-complete').textContent = complete;
+  document.getElementById('cnt-all').textContent            = allExams.length;
+  document.getElementById('cnt-pending').textContent        = allExams.filter(e => e.status === 'pending').length;
+  document.getElementById('cnt-overdue').textContent        = allExams.filter(e => e.status === 'overdue').length;
+  document.getElementById('cnt-not_distributed').textContent= allExams.filter(e => e.status === 'not_distributed').length;
+  document.getElementById('cnt-complete').textContent       = allExams.filter(e => e.status === 'complete').length;
 }
 
+// ─────────────────────────────────────────────────────────────
+// FILTER BY CARD CLICK
+// ─────────────────────────────────────────────────────────────
 function filterByCard(status) {
-  // Update active card highlight
-  ['all','pending','overdue','complete'].forEach(s => {
-    document.getElementById('card-' + s).classList.toggle('active', s === status);
+  // Highlight correct card
+  ['all','pending','overdue','not_distributed','complete'].forEach(s => {
+    document.getElementById('card-' + s)?.classList.toggle('active', s === status);
   });
-  // Sync status chip
-  setStatusChip(status === 'all' ? 'all' : status);
+  // Sync chip
+  setStatusChip(status, false);
 }
 
 // ─────────────────────────────────────────────────────────────
-// FILTER CHIPS
+// STATUS CHIP
 // ─────────────────────────────────────────────────────────────
-function setStatusChip(status) {
+function setStatusChip(status, syncCard = true) {
   activeStatus = status;
-  ['all','pending','progress','overdue','complete'].forEach(s => {
+
+  // Highlight chip
+  ['all','pending','progress','overdue','not_distributed','complete'].forEach(s => {
     document.getElementById('chip-' + s)?.classList.toggle('active', s === status);
   });
-  // Sync card highlight
-  const cardKey = status === 'progress' ? 'all' : status;
-  ['all','pending','overdue','complete'].forEach(s => {
-    document.getElementById('card-' + s)?.classList.toggle('active', s === cardKey);
-  });
+
+  // Sync card highlight if needed
+  if (syncCard) {
+    const cardKey = STATUS[status]?.cardId || 'all';
+    ['all','pending','overdue','not_distributed','complete'].forEach(s => {
+      document.getElementById('card-' + s)?.classList.toggle('active', s === cardKey);
+    });
+  }
+
   applyFilters();
 }
 
 // ─────────────────────────────────────────────────────────────
-// POPULATE BATCH DROPDOWN
+// BATCH DROPDOWN
 // ─────────────────────────────────────────────────────────────
 function populateBatchDropdown() {
   const batches = [...new Set(allExams.map(e => e.batch).filter(Boolean))].sort();
@@ -395,7 +412,7 @@ function populateBatchDropdown() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// APPLY ALL FILTERS
+// APPLY FILTERS
 // ─────────────────────────────────────────────────────────────
 function applyFilters() {
   const q        = document.getElementById('fSearch').value.toLowerCase();
@@ -407,14 +424,14 @@ function applyFilters() {
   const dateTo   = document.getElementById('fDateTo').value;
 
   filtered = allExams.filter(e => {
-    if (q      && !e.subject.toLowerCase().includes(q) && !(e.exam_ref||'').toLowerCase().includes(q)) return false;
-    if (std    && String(e.standard) !== std)   return false;
-    if (med    && e.medium !== med)             return false;
-    if (type   && e.exam_type !== type)         return false;
-    if (batch  && e.batch !== batch)            return false;
-    if (dateFrom && e.exam_date < dateFrom)     return false;
-    if (dateTo   && e.exam_date > dateTo)       return false;
-    if (activeStatus !== 'all' && e._status !== activeStatus) return false;
+    if (q        && !e.subject.toLowerCase().includes(q) && !(e.exam_ref||'').toLowerCase().includes(q)) return false;
+    if (std      && String(e.standard) !== std)   return false;
+    if (med      && e.medium !== med)             return false;
+    if (type     && e.exam_type !== type)         return false;
+    if (batch    && e.batch !== batch)            return false;
+    if (dateFrom && e.exam_date < dateFrom)       return false;
+    if (dateTo   && e.exam_date > dateTo)         return false;
+    if (activeStatus !== 'all' && e.status !== activeStatus) return false;
     return true;
   });
 
@@ -425,17 +442,15 @@ function applyFilters() {
 // CLEAR ALL FILTERS
 // ─────────────────────────────────────────────────────────────
 function clearAllFilters() {
-  document.getElementById('fSearch').value  = '';
-  document.getElementById('fStd').value     = '';
-  document.getElementById('fMed').value     = '';
-  document.getElementById('fType').value    = '';
-  document.getElementById('fBatch').value   = '';
+  document.getElementById('fSearch').value   = '';
+  document.getElementById('fStd').value      = '';
+  document.getElementById('fMed').value      = '';
+  document.getElementById('fType').value     = '';
+  document.getElementById('fBatch').value    = '';
   document.getElementById('fDateFrom').value = '';
-  document.getElementById('fDateTo').value  = '';
+  document.getElementById('fDateTo').value   = '';
   activeStatus = 'all';
   setStatusChip('all');
-  filterByCard('all');
-  applyFilters();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -443,23 +458,18 @@ function clearAllFilters() {
 // ─────────────────────────────────────────────────────────────
 function renderTable() {
   const tbody = document.getElementById('examTableBody');
-  const label = document.getElementById('examCountLabel');
-  label.textContent = `${filtered.length} exam${filtered.length !== 1 ? 's' : ''}`;
+  document.getElementById('examCountLabel').textContent =
+    `${filtered.length} exam${filtered.length !== 1 ? 's' : ''}`;
 
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="11" class="no-exams">No exams match your filters</td></tr>`;
     return;
   }
 
-  const statusBadge = {
-    pending:  ['badge-pending',  'Pending'],
-    progress: ['badge-progress', 'In Progress'],
-    overdue:  ['badge-overdue',  'Overdue'],
-    complete: ['badge-complete', 'Complete'],
-  };
-
   tbody.innerHTML = filtered.map(e => {
-    const [cls, lbl] = statusBadge[e._status] || statusBadge.pending;
+    const st  = STATUS[e.status] || STATUS.pending;
+    const cls = st.badgeCls || 'badge-pending';
+    const lbl = st.label;
     return `
     <tr class="${selectedId === e.id ? 'active-row' : ''}" onclick="openExam('${e.id}')">
       <td class="ref-col" title="${e.exam_ref}">${e.exam_ref || '—'}</td>
@@ -478,7 +488,7 @@ function renderTable() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// OPEN EXAM
+// OPEN EXAM DETAIL
 // ─────────────────────────────────────────────────────────────
 async function openExam(id) {
   selectedId = id;
@@ -613,7 +623,7 @@ async function saveGeneral() {
     showToast('General details saved', 'success');
     detail = await getExamDetail(detail.id);
 
-    // Update marks and students in allExams list
+    // Update local exam list
     const idx = allExams.findIndex(e => e.id === detail.id);
     if (idx >= 0) {
       allExams[idx].marks            = marks;
@@ -709,7 +719,7 @@ function buildBatch(b, idx) {
       </span>
       <div style="display:flex;gap:6px;align-items:center">
         ${due ? `<span class="due-badge ${dueCls}">Due: ${fmtDate(due)}${od > 0 ? ' (' + od + 'd overdue)' : ''}</span>` : ''}
-        ${b.id ? `<button class="btn btn-danger btn-sm" onclick="delBatch('${b.id}')"><span class="material-symbols-outlined">delete</span></button>` : ''}
+        ${b.id ? `<button class="btn btn-danger btn-sm" onclick="delBatch('${b.id}','${detail.id}')"><span class="material-symbols-outlined">delete</span></button>` : ''}
       </div>
     </div>
 
@@ -806,6 +816,7 @@ function buildBatch(b, idx) {
   </div>`;
 }
 
+// ── Live calculations ─────────────────────────────────────────
 function liveCalc(sid) {
   const deliveredOn  = document.getElementById(`bc_do_${sid}`)?.value;
   const sectionMarks = parseInt(document.getElementById(`bc_sm_${sid}`)?.value) || 0;
@@ -834,6 +845,7 @@ function onSentDateChange(sid) {
   liveCalc(sid);
 }
 
+// ── Save batch ────────────────────────────────────────────────
 async function saveBatch(batchId, idx, sid) {
   const correctorId  = document.getElementById(`bc_cor_${sid}`)?.value;
   const splitType    = document.getElementById(`bc_split_${sid}`)?.value;
@@ -877,19 +889,19 @@ async function saveBatch(batchId, idx, sid) {
     detail = await getExamDetail(detail.id);
     document.getElementById('batchContainer').innerHTML = buildAllBatches();
     showBatchValidation();
-    refreshListStatus();
+    await refreshListStatus();
   } catch(e) { showToast('Error saving batch: ' + e.message, 'error'); }
 }
 
-async function delBatch(batchId) {
+async function delBatch(batchId, examId) {
   if (!confirm('Delete this corrector batch? All its distributions will also be deleted.')) return;
   try {
-    await deleteCorrectorBatch(batchId);
+    await deleteCorrectorBatch(batchId, examId);
     showToast('Batch deleted', 'success');
     detail = await getExamDetail(detail.id);
     document.getElementById('batchContainer').innerHTML = buildAllBatches();
     showBatchValidation();
-    refreshListStatus();
+    await refreshListStatus();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
@@ -910,13 +922,9 @@ function showBatchValidation() {
     if (sum !== detail.marks)
       msgs.push(`Type B: Section marks total (${sum}) ≠ exam marks (${detail.marks})`);
   }
-  if (msgs.length) {
-    el.innerHTML = msgs.map(m =>
-      `<div class="val-msg err"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">warning</span> ${m}</div>`
-    ).join('');
-  } else {
-    el.innerHTML = `<div class="val-msg ok"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">check_circle</span> Batch totals are valid</div>`;
-  }
+  el.innerHTML = msgs.length
+    ? msgs.map(m => `<div class="val-msg err"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">warning</span> ${m}</div>`).join('')
+    : `<div class="val-msg ok"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">check_circle</span> Batch totals are valid</div>`;
 }
 
 function addBatch() {
@@ -953,7 +961,7 @@ function buildDists(batchId, dists) {
       </div>
       <div style="display:flex;gap:4px;align-items:flex-end;padding-bottom:1px">
         <button class="btn btn-primary btn-sm" onclick="saveDist('${d.id}','${batchId}')"><span class="material-symbols-outlined">save</span></button>
-        <button class="btn btn-danger btn-sm" onclick="delDist('${d.id}','${batchId}')"><span class="material-symbols-outlined">delete</span></button>
+        <button class="btn btn-danger btn-sm" onclick="delDist('${d.id}','${batchId}','${detail.id}')"><span class="material-symbols-outlined">delete</span></button>
       </div>
     </div>`).join('');
 }
@@ -988,6 +996,7 @@ async function saveNewDist(tempId, batchId) {
     detail = await getExamDetail(detail.id);
     const batch = detail.corrector_batches?.find(b => b.id === batchId);
     if (batch) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, batch.distributions);
+    await refreshListStatus();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
@@ -998,18 +1007,43 @@ async function saveDist(distId, batchId) {
   try {
     await saveDistribution({ id: distId, batch_id: batchId, papers_distributed: papers, distribution_date: date });
     showToast('Distribution updated', 'success');
+    await refreshListStatus();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-async function delDist(distId, batchId) {
+async function delDist(distId, batchId, examId) {
   if (!confirm('Delete this distribution entry?')) return;
   try {
-    await deleteDistribution(distId);
+    await deleteDistribution(distId, examId);
     showToast('Distribution deleted', 'success');
     detail = await getExamDetail(detail.id);
     const batch = detail.corrector_batches?.find(b => b.id === batchId);
     if (batch) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, batch.distributions);
+    await refreshListStatus();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// REFRESH LIST STATUS — reads from DB after any change
+// ─────────────────────────────────────────────────────────────
+async function refreshListStatus() {
+  // Re-fetch just this exam to get updated status from DB
+  const { data } = await db
+    .from('exams')
+    .select('id, status, marks, students_present')
+    .eq('id', detail.id)
+    .single();
+
+  if (data) {
+    const idx = allExams.findIndex(e => e.id === detail.id);
+    if (idx >= 0) {
+      allExams[idx].status           = data.status;
+      allExams[idx].marks            = data.marks;
+      allExams[idx].students_present = data.students_present;
+    }
+    updateSummaryCards();
+    applyFilters();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1020,18 +1054,6 @@ function addDays(dateStr, days) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
   return d.toISOString().split('T')[0];
-}
-
-function refreshListStatus() {
-  const batches = detail.corrector_batches || [];
-  const idx = allExams.findIndex(e => e.id === detail.id);
-  if (idx < 0) return;
-  if (!batches.length)                        allExams[idx]._status = 'pending';
-  else if (batches.some(b => b.is_overdue))   allExams[idx]._status = 'overdue';
-  else if (batches.every(b => b.return_date)) allExams[idx]._status = 'complete';
-  else                                         allExams[idx]._status = 'progress';
-  updateSummaryCards();
-  applyFilters();
 }
 </script>
 
