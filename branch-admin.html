@@ -13,14 +13,14 @@
     .stat-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 14px; cursor:pointer; transition:box-shadow 0.15s; border-left:3px solid var(--border); }
     .stat-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); }
     .stat-card.active { box-shadow:0 0 0 1.5px var(--navy); border-left-color:var(--navy); }
-    .stat-card.c-pending   { border-left-color:var(--amber); }
-    .stat-card.c-overdue   { border-left-color:var(--red);   }
-    .stat-card.c-notdist   { border-left-color:#7c3aed;      }
-    .stat-card.c-complete  { border-left-color:var(--green); }
-    .stat-card.c-pending.active  { box-shadow:0 0 0 1.5px var(--amber);  }
-    .stat-card.c-overdue.active  { box-shadow:0 0 0 1.5px var(--red);    }
-    .stat-card.c-notdist.active  { box-shadow:0 0 0 1.5px #7c3aed;       }
-    .stat-card.c-complete.active { box-shadow:0 0 0 1.5px var(--green);  }
+    .stat-card.c-pending  { border-left-color:var(--amber); }
+    .stat-card.c-overdue  { border-left-color:var(--red);   }
+    .stat-card.c-notdist  { border-left-color:#7c3aed;      }
+    .stat-card.c-complete { border-left-color:var(--green); }
+    .stat-card.c-pending.active  { box-shadow:0 0 0 1.5px var(--amber); }
+    .stat-card.c-overdue.active  { box-shadow:0 0 0 1.5px var(--red);   }
+    .stat-card.c-notdist.active  { box-shadow:0 0 0 1.5px #7c3aed;      }
+    .stat-card.c-complete.active { box-shadow:0 0 0 1.5px var(--green); }
     .stat-label { font-size:10px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px; }
     .stat-num { font-size:24px; font-weight:700; color:var(--text); line-height:1; }
     .stat-num.amber  { color:var(--amber);  }
@@ -29,32 +29,42 @@
     .stat-num.green  { color:var(--green);  }
 
     /* ── Filter bar ── */
-    .filter-bar { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:14px; }
-    .filter-row-1 { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
-    .filter-row-2 { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .filter-bar { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:14px; }
+
+    /* Row 1 — always visible */
+    .filter-row-1 { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
     .filter-section-label { font-size:11px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.3px; margin-right:2px; white-space:nowrap; }
     .chip { padding:4px 12px; border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-sub); background:var(--white); cursor:pointer; transition:all 0.1s; white-space:nowrap; }
     .chip:hover { background:var(--grey-light); }
-    .chip.active          { background:var(--navy-light);  color:var(--navy);  border-color:var(--navy);  font-weight:600; }
+    .chip.active            { background:var(--navy-light);  color:var(--navy);  border-color:var(--navy);  font-weight:600; }
     .chip.c-pending.active  { background:var(--amber-light); color:var(--amber); border-color:var(--amber); }
     .chip.c-progress.active { background:#fef3e2;            color:var(--amber); border-color:var(--amber); }
     .chip.c-overdue.active  { background:var(--red-light);   color:var(--red);   border-color:var(--red);   }
     .chip.c-notdist.active  { background:#ede9fe;            color:#7c3aed;      border-color:#7c3aed;      }
     .chip.c-complete.active { background:var(--green-light); color:var(--green); border-color:var(--green); }
-    .filter-divider { width:1px; height:20px; background:var(--border); margin:0 4px; flex-shrink:0; }
-    .filter-select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
-    .filter-search { padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; width:200px; }
+    .filter-divider { width:1px; height:20px; background:var(--border); margin:0 2px; flex-shrink:0; }
+    .filter-search { padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; width:180px; }
     .filter-search:focus { border-color:var(--navy); }
-    .filter-date { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
-    .btn-clear-filters { padding:5px 12px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text-sub); background:var(--grey-light); cursor:pointer; margin-left:auto; }
+    .btn-more-filters { display:flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); cursor:pointer; white-space:nowrap; transition:background 0.1s; }
+    .btn-more-filters:hover { background:var(--grey-light); }
+    .btn-more-filters.has-active { color:var(--navy); border-color:var(--navy); background:var(--navy-light); font-weight:600; }
+    .btn-more-filters .material-symbols-outlined { font-size:15px; }
+    .btn-clear-filters { display:flex; align-items:center; gap:4px; padding:5px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text-sub); background:var(--grey-light); cursor:pointer; margin-left:auto; }
     .btn-clear-filters:hover { background:var(--border); }
+    .btn-clear-filters .material-symbols-outlined { font-size:14px; }
+
+    /* Row 2 — collapsible dropdowns */
+    .filter-row-2 { display:none; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+    .filter-row-2.open { display:flex; }
+    .filter-select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
+    .filter-date { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
 
     /* ── Exam table ── */
     .exam-table-wrap { background:var(--white); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:14px; }
     .exam-table-header { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .exam-table-title { font-size:13px; font-weight:600; color:var(--text); }
     .exam-count-badge { font-size:11px; color:var(--text-sub); }
-    .table-scroll { overflow-x:auto; max-height:300px; overflow-y:auto; }
+    .table-scroll { overflow-x:auto; max-height:calc(100vh - 340px); overflow-y:auto; }
     .exam-table { width:100%; border-collapse:collapse; font-size:12.5px; }
     .exam-table thead th { background:var(--grey-light); padding:8px 12px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-sub); border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0; z-index:5; }
     .exam-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
@@ -66,18 +76,28 @@
     .exam-table tbody td.subject-col { white-space:normal; min-width:120px; font-weight:600; }
     .exam-table tbody td.ref-col { font-size:11px; color:var(--text-sub); max-width:140px; overflow:hidden; text-overflow:ellipsis; }
     .no-exams { text-align:center; padding:32px; color:var(--text-sub); font-size:13px; }
-
-    /* ── Not distributed badge ── */
     .badge-notdist { background:#ede9fe; color:#7c3aed; }
 
-    /* ── Detail panel ── */
-    .detail-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; color:var(--text-sub); text-align:center; background:var(--white); border:1px solid var(--border); border-radius:8px; }
-    .detail-placeholder .material-symbols-outlined { font-size:40px; color:var(--border); margin-bottom:10px; }
+    /* ── Slider panel ── */
+    .slider-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; }
+    .slider-backdrop.open { display:block; }
 
-    /* ── Exam header ── */
+    .slider-panel { position:fixed; top:0; right:0; width:100%; height:100vh; background:var(--bg); z-index:201; transform:translateX(100%); transition:transform 0.28s cubic-bezier(0.4,0,0.2,1); display:flex; flex-direction:column; overflow:hidden; }
+    .slider-panel.open { transform:translateX(0); }
+
+    .slider-topbar { background:var(--navy); padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .slider-topbar-title { color:var(--white); font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .slider-topbar-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .btn-close-slider { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:6px; background:rgba(255,255,255,0.15); border:none; cursor:pointer; color:var(--white); }
+    .btn-close-slider:hover { background:rgba(255,255,255,0.25); }
+    .btn-close-slider .material-symbols-outlined { font-size:20px; }
+
+    .slider-body { flex:1; overflow-y:auto; padding:20px; }
+
+    /* ── Exam header inside slider ── */
     .exam-detail-header { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:12px; }
-    .exam-detail-title { font-size:16px; font-weight:700; color:var(--text); margin:0 0 7px; }
-    .exam-meta-row { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-sub); }
+    .exam-detail-title { font-size:15px; font-weight:700; color:var(--text); margin:0 0 7px; }
+    .exam-meta-row { display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-sub); }
     .exam-meta-row span { display:flex; align-items:center; gap:3px; }
     .exam-meta-row .material-symbols-outlined { font-size:14px; }
 
@@ -120,7 +140,7 @@
     /* ── Responsive ── */
     @media(max-width:1000px) { .summary-row { grid-template-columns:repeat(3,1fr); } }
     @media(max-width:700px)  { .summary-row { grid-template-columns:repeat(2,1fr); } .fg3 { grid-template-columns:1fr 1fr; } }
-    @media(max-width:500px)  { .fg3, .fg2 { grid-template-columns:1fr; } .page-content { padding:12px; } .filter-search { width:140px; } }
+    @media(max-width:500px)  { .fg3, .fg2 { grid-template-columns:1fr; } .page-content { padding:12px; } .filter-search { width:120px; } }
   </style>
 </head>
 <body>
@@ -192,54 +212,66 @@
 
     <!-- ── Filter bar ── -->
     <div class="filter-bar">
+
+      <!-- Row 1: always visible — status chips + more filters + search + clear -->
       <div class="filter-row-1">
-        <span class="filter-section-label">Status</span>
-        <span class="chip active"             id="chip-all"              onclick="setStatusChip('all')">All</span>
-        <span class="chip c-pending"          id="chip-pending"          onclick="setStatusChip('pending')">Pending</span>
-        <span class="chip c-progress"         id="chip-progress"         onclick="setStatusChip('progress')">In Progress</span>
-        <span class="chip c-overdue"          id="chip-overdue"          onclick="setStatusChip('overdue')">Overdue</span>
-        <span class="chip c-notdist"          id="chip-not_distributed"  onclick="setStatusChip('not_distributed')">Not Distributed</span>
-        <span class="chip c-complete"         id="chip-complete"         onclick="setStatusChip('complete')">Complete</span>
+        <span class="chip active"            id="chip-all"             onclick="setStatusChip('all')">All</span>
+        <span class="chip c-pending"         id="chip-pending"         onclick="setStatusChip('pending')">Pending</span>
+        <span class="chip c-progress"        id="chip-progress"        onclick="setStatusChip('progress')">In Progress</span>
+        <span class="chip c-overdue"         id="chip-overdue"         onclick="setStatusChip('overdue')">Overdue</span>
+        <span class="chip c-notdist"         id="chip-not_distributed" onclick="setStatusChip('not_distributed')">Not Distributed</span>
+        <span class="chip c-complete"        id="chip-complete"        onclick="setStatusChip('complete')">Complete</span>
         <div class="filter-divider"></div>
+        <button class="btn-more-filters" id="btnMoreFilters" onclick="toggleMoreFilters()">
+          <span class="material-symbols-outlined">tune</span>
+          <span id="moreFiltersLabel">More Filters</span>
+          <span class="material-symbols-outlined" id="moreFiltersIcon">expand_more</span>
+        </button>
         <input class="filter-search" type="text" id="fSearch" placeholder="Search subject or exam..." oninput="applyFilters()"/>
         <button class="btn-clear-filters" onclick="clearAllFilters()">
-          <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">filter_alt_off</span>
+          <span class="material-symbols-outlined">filter_alt_off</span>
           Clear
         </button>
       </div>
-      <div class="filter-row-2">
-        <span class="filter-section-label">Filter</span>
-        <select class="filter-select" id="fStd" onchange="applyFilters()">
-          <option value="">All Standards</option>
+
+      <!-- Row 2: collapsible dropdowns -->
+      <div class="filter-row-2" id="filterRow2">
+        <span class="filter-section-label">Std</span>
+        <select class="filter-select" id="fStd" onchange="applyFilters(); updateMoreFiltersCount()">
+          <option value="">All</option>
           <option value="7">Std 7</option>
           <option value="8">Std 8</option>
           <option value="9">Std 9</option>
           <option value="10">Std 10</option>
         </select>
-        <select class="filter-select" id="fMed" onchange="applyFilters()">
-          <option value="">All Medium</option>
+        <span class="filter-section-label">Medium</span>
+        <select class="filter-select" id="fMed" onchange="applyFilters(); updateMoreFiltersCount()">
+          <option value="">All</option>
           <option value="CB">CBSE</option>
           <option value="IC">ICSE</option>
           <option value="EM">SSC EM</option>
           <option value="SE">SSC SE</option>
         </select>
-        <select class="filter-select" id="fType" onchange="applyFilters()">
-          <option value="">All Types</option>
+        <span class="filter-section-label">Type</span>
+        <select class="filter-select" id="fType" onchange="applyFilters(); updateMoreFiltersCount()">
+          <option value="">All</option>
           <option value="BT">Basic Test</option>
           <option value="WT">Weekly Test</option>
           <option value="UT">Unit Test</option>
           <option value="SEM">Semester</option>
           <option value="PRE">Prelim</option>
         </select>
-        <select class="filter-select" id="fBatch" onchange="applyFilters()">
-          <option value="">All Batches</option>
+        <span class="filter-section-label">Batch</span>
+        <select class="filter-select" id="fBatch" onchange="applyFilters(); updateMoreFiltersCount()">
+          <option value="">All</option>
         </select>
         <div class="filter-divider"></div>
         <span class="filter-section-label">Date</span>
-        <input class="filter-date" type="date" id="fDateFrom" onchange="applyFilters()" title="From date"/>
+        <input class="filter-date" type="date" id="fDateFrom" onchange="applyFilters(); updateMoreFiltersCount()" title="From date"/>
         <span style="font-size:12px;color:var(--text-sub)">to</span>
-        <input class="filter-date" type="date" id="fDateTo" onchange="applyFilters()" title="To date"/>
+        <input class="filter-date" type="date" id="fDateTo" onchange="applyFilters(); updateMoreFiltersCount()" title="To date"/>
       </div>
+
     </div>
 
     <!-- ── Exam table ── -->
@@ -272,15 +304,6 @@
       </div>
     </div>
 
-    <!-- ── Exam detail ── -->
-    <div id="detailPanel">
-      <div class="detail-placeholder">
-        <span class="material-symbols-outlined">touch_app</span>
-        <p style="font-weight:600;color:var(--text);margin:0 0 4px">Select an exam from the table above</p>
-        <p style="font-size:12px;margin:0">Click any row to open the exam entry form</p>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -293,6 +316,27 @@
     </div>
   </div>
 </nav>
+
+<!-- ── Slider backdrop ── -->
+<div class="slider-backdrop" id="sliderBackdrop" onclick="closeSlider()"></div>
+
+<!-- ── Slider panel ── -->
+<div class="slider-panel" id="sliderPanel">
+  <div class="slider-topbar">
+    <div class="slider-topbar-title" id="sliderTitle">Exam Detail</div>
+    <div class="slider-topbar-right">
+      <button class="btn-close-slider" onclick="closeSlider()" title="Close (Esc)">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+  <div class="slider-body" id="sliderBody">
+    <div style="text-align:center;padding:40px;color:var(--text-sub)">
+      <span class="material-symbols-outlined" style="font-size:40px;color:var(--border)">touch_app</span>
+      <p>Select an exam from the table</p>
+    </div>
+  </div>
+</div>
 
 <div id="toast-container"></div>
 
@@ -312,15 +356,15 @@ let detail       = null;
 let supervisors  = [];
 let correctors   = [];
 let activeStatus = 'all';
+let filtersOpen  = false;
 
-// ── Status config — single source of truth ────────────────────
 const STATUS = {
-  all:              { label:'All',              chipCls:'',           cardId:'all',              badgeCls:'',                numCls:''       },
-  pending:          { label:'Pending',          chipCls:'c-pending',  cardId:'pending',          badgeCls:'badge-pending',   numCls:'amber'  },
-  progress:         { label:'In Progress',      chipCls:'c-progress', cardId:'all',              badgeCls:'badge-progress',  numCls:''       },
-  overdue:          { label:'Overdue',          chipCls:'c-overdue',  cardId:'overdue',          badgeCls:'badge-overdue',   numCls:'red'    },
-  not_distributed:  { label:'Not Distributed',  chipCls:'c-notdist',  cardId:'not_distributed',  badgeCls:'badge-notdist',   numCls:'purple' },
-  complete:         { label:'Complete',         chipCls:'c-complete', cardId:'complete',         badgeCls:'badge-complete',  numCls:'green'  },
+  all:             { label:'All',             chipCls:'',          cardId:'all',             badgeCls:'',               numCls:''       },
+  pending:         { label:'Pending',         chipCls:'c-pending', cardId:'pending',         badgeCls:'badge-pending',  numCls:'amber'  },
+  progress:        { label:'In Progress',     chipCls:'c-progress',cardId:'all',             badgeCls:'badge-progress', numCls:''       },
+  overdue:         { label:'Overdue',         chipCls:'c-overdue', cardId:'overdue',         badgeCls:'badge-overdue',  numCls:'red'    },
+  not_distributed: { label:'Not Distributed', chipCls:'c-notdist', cardId:'not_distributed', badgeCls:'badge-notdist',  numCls:'purple' },
+  complete:        { label:'Complete',        chipCls:'c-complete',cardId:'complete',        badgeCls:'badge-complete', numCls:'green'  },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -341,6 +385,9 @@ const STATUS = {
   } catch(e) { showToast('Failed to load: ' + e.message, 'error'); }
 })();
 
+// Escape key closes slider
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSlider(); });
+
 // ─────────────────────────────────────────────────────────────
 // LOAD EXAMS
 // ─────────────────────────────────────────────────────────────
@@ -357,25 +404,23 @@ async function loadExams() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// SUMMARY CARDS — read status directly from DB
+// SUMMARY CARDS
 // ─────────────────────────────────────────────────────────────
 function updateSummaryCards() {
-  document.getElementById('cnt-all').textContent            = allExams.length;
-  document.getElementById('cnt-pending').textContent        = allExams.filter(e => e.status === 'pending').length;
-  document.getElementById('cnt-overdue').textContent        = allExams.filter(e => e.status === 'overdue').length;
-  document.getElementById('cnt-not_distributed').textContent= allExams.filter(e => e.status === 'not_distributed').length;
-  document.getElementById('cnt-complete').textContent       = allExams.filter(e => e.status === 'complete').length;
+  document.getElementById('cnt-all').textContent             = allExams.length;
+  document.getElementById('cnt-pending').textContent         = allExams.filter(e => e.status === 'pending').length;
+  document.getElementById('cnt-overdue').textContent         = allExams.filter(e => e.status === 'overdue').length;
+  document.getElementById('cnt-not_distributed').textContent = allExams.filter(e => e.status === 'not_distributed').length;
+  document.getElementById('cnt-complete').textContent        = allExams.filter(e => e.status === 'complete').length;
 }
 
 // ─────────────────────────────────────────────────────────────
-// FILTER BY CARD CLICK
+// FILTER BY CARD
 // ─────────────────────────────────────────────────────────────
 function filterByCard(status) {
-  // Highlight correct card
   ['all','pending','overdue','not_distributed','complete'].forEach(s => {
     document.getElementById('card-' + s)?.classList.toggle('active', s === status);
   });
-  // Sync chip
   setStatusChip(status, false);
 }
 
@@ -384,21 +429,42 @@ function filterByCard(status) {
 // ─────────────────────────────────────────────────────────────
 function setStatusChip(status, syncCard = true) {
   activeStatus = status;
-
-  // Highlight chip
   ['all','pending','progress','overdue','not_distributed','complete'].forEach(s => {
     document.getElementById('chip-' + s)?.classList.toggle('active', s === status);
   });
-
-  // Sync card highlight if needed
   if (syncCard) {
     const cardKey = STATUS[status]?.cardId || 'all';
     ['all','pending','overdue','not_distributed','complete'].forEach(s => {
       document.getElementById('card-' + s)?.classList.toggle('active', s === cardKey);
     });
   }
-
   applyFilters();
+}
+
+// ─────────────────────────────────────────────────────────────
+// TOGGLE MORE FILTERS
+// ─────────────────────────────────────────────────────────────
+function toggleMoreFilters() {
+  filtersOpen = !filtersOpen;
+  document.getElementById('filterRow2').classList.toggle('open', filtersOpen);
+  document.getElementById('moreFiltersIcon').textContent = filtersOpen ? 'expand_less' : 'expand_more';
+}
+
+// Count active dropdown filters and update button label
+function updateMoreFiltersCount() {
+  const count = [
+    document.getElementById('fStd').value,
+    document.getElementById('fMed').value,
+    document.getElementById('fType').value,
+    document.getElementById('fBatch').value,
+    document.getElementById('fDateFrom').value,
+    document.getElementById('fDateTo').value,
+  ].filter(v => v !== '').length;
+
+  const btn   = document.getElementById('btnMoreFilters');
+  const label = document.getElementById('moreFiltersLabel');
+  label.textContent = count > 0 ? `More Filters (${count})` : 'More Filters';
+  btn.classList.toggle('has-active', count > 0);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -407,7 +473,7 @@ function setStatusChip(status, syncCard = true) {
 function populateBatchDropdown() {
   const batches = [...new Set(allExams.map(e => e.batch).filter(Boolean))].sort();
   const sel = document.getElementById('fBatch');
-  sel.innerHTML = '<option value="">All Batches</option>' +
+  sel.innerHTML = '<option value="">All</option>' +
     batches.map(b => `<option value="${b}">${b}</option>`).join('');
 }
 
@@ -451,6 +517,7 @@ function clearAllFilters() {
   document.getElementById('fDateTo').value   = '';
   activeStatus = 'all';
   setStatusChip('all');
+  updateMoreFiltersCount();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -468,8 +535,6 @@ function renderTable() {
 
   tbody.innerHTML = filtered.map(e => {
     const st  = STATUS[e.status] || STATUS.pending;
-    const cls = st.badgeCls || 'badge-pending';
-    const lbl = st.label;
     return `
     <tr class="${selectedId === e.id ? 'active-row' : ''}" onclick="openExam('${e.id}')">
       <td class="ref-col" title="${e.exam_ref}">${e.exam_ref || '—'}</td>
@@ -482,37 +547,57 @@ function renderTable() {
       <td>${(e.from_time||'').slice(0,5)}–${(e.to_time||'').slice(0,5)}</td>
       <td style="text-align:center">${e.marks || '<span style="color:var(--orange);font-size:11px">Not set</span>'}</td>
       <td style="text-align:center">${e.students_present ?? '—'}</td>
-      <td><span class="badge ${cls}">${lbl}</span></td>
+      <td><span class="badge ${st.badgeCls}">${st.label}</span></td>
     </tr>`;
   }).join('');
 }
 
 // ─────────────────────────────────────────────────────────────
-// OPEN EXAM DETAIL
+// SLIDER — OPEN / CLOSE
+// ─────────────────────────────────────────────────────────────
+function openSlider() {
+  document.getElementById('sliderPanel').classList.add('open');
+  document.getElementById('sliderBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSlider() {
+  document.getElementById('sliderPanel').classList.remove('open');
+  document.getElementById('sliderBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+  selectedId = null;
+  renderTable();
+}
+
+// ─────────────────────────────────────────────────────────────
+// OPEN EXAM
 // ─────────────────────────────────────────────────────────────
 async function openExam(id) {
   selectedId = id;
   renderTable();
 
-  const panel = document.getElementById('detailPanel');
-  panel.innerHTML = `<div class="detail-placeholder"><span class="material-symbols-outlined" style="animation:spin 0.8s linear infinite;font-size:32px">refresh</span></div>`;
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Show loading in slider
+  document.getElementById('sliderTitle').textContent = 'Loading...';
+  document.getElementById('sliderBody').innerHTML =
+    `<div style="text-align:center;padding:60px"><span class="material-symbols-outlined" style="font-size:36px;animation:spin 0.8s linear infinite;color:var(--text-sub)">refresh</span></div>`;
+  openSlider();
 
   try {
     detail = await getExamDetail(id);
-    renderDetail();
+    document.getElementById('sliderTitle').textContent = detail.subject + ' — ' + fmtDate(detail.exam_date);
+    document.getElementById('sliderBody').innerHTML = buildDetailHTML();
   } catch(e) {
-    panel.innerHTML = `<div class="detail-placeholder"><span class="material-symbols-outlined">error</span><p>${e.message}</p></div>`;
+    document.getElementById('sliderBody').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--red)"><span class="material-symbols-outlined" style="font-size:36px">error</span><p>${e.message}</p></div>`;
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// RENDER DETAIL
+// BUILD DETAIL HTML
 // ─────────────────────────────────────────────────────────────
-function renderDetail() {
+function buildDetailHTML() {
   const e = detail;
-  document.getElementById('detailPanel').innerHTML = `
-
+  return `
     <div class="exam-detail-header">
       <div class="exam-detail-title">${e.subject} &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-sub)">${e.exam_ref}</span></div>
       <div class="exam-meta-row">
@@ -623,7 +708,6 @@ async function saveGeneral() {
     showToast('General details saved', 'success');
     detail = await getExamDetail(detail.id);
 
-    // Update local exam list
     const idx = allExams.findIndex(e => e.id === detail.id);
     if (idx >= 0) {
       allExams[idx].marks            = marks;
@@ -631,7 +715,10 @@ async function saveGeneral() {
     }
     updateSummaryCards();
     renderTable();
-    renderDetail();
+
+    // Update slider title and re-render detail
+    document.getElementById('sliderTitle').textContent = detail.subject + ' — ' + fmtDate(detail.exam_date);
+    document.getElementById('sliderBody').innerHTML = buildDetailHTML();
   } catch(e) {
     showToast('Error: ' + e.message, 'error');
   }
@@ -816,7 +903,6 @@ function buildBatch(b, idx) {
   </div>`;
 }
 
-// ── Live calculations ─────────────────────────────────────────
 function liveCalc(sid) {
   const deliveredOn  = document.getElementById(`bc_do_${sid}`)?.value;
   const sectionMarks = parseInt(document.getElementById(`bc_sm_${sid}`)?.value) || 0;
@@ -845,7 +931,6 @@ function onSentDateChange(sid) {
   liveCalc(sid);
 }
 
-// ── Save batch ────────────────────────────────────────────────
 async function saveBatch(batchId, idx, sid) {
   const correctorId  = document.getElementById(`bc_cor_${sid}`)?.value;
   const splitType    = document.getElementById(`bc_split_${sid}`)?.value;
@@ -857,11 +942,11 @@ async function saveBatch(batchId, idx, sid) {
   const returnDate   = document.getElementById(`bc_rd_${sid}`)?.value;
   const papersRec    = parseInt(document.getElementById(`bc_pr_${sid}`)?.value) || null;
 
-  if (!correctorId)               { showToast('Please select a corrector', 'error'); return; }
-  if (!papersSent || papersSent < 1)  { showToast('Papers sent is required', 'error'); return; }
+  if (!correctorId)                  { showToast('Please select a corrector', 'error'); return; }
+  if (!papersSent || papersSent < 1) { showToast('Papers sent is required', 'error'); return; }
   if (!sectionMarks || sectionMarks < 1) { showToast('Section marks is required', 'error'); return; }
-  if (!sentDate)                  { showToast('Papers sent date is required', 'error'); return; }
-  if (!deliveredOn)               { showToast('Delivered on date is required', 'error'); return; }
+  if (!sentDate)                     { showToast('Papers sent date is required', 'error'); return; }
+  if (!deliveredOn)                  { showToast('Delivered on date is required', 'error'); return; }
 
   if (!validateSentDate(detail.exam_date, sentDate)) {
     showToast(`Sent date must be between exam date (${fmtDate(detail.exam_date)}) and +5 days`, 'error'); return;
@@ -1024,10 +1109,9 @@ async function delDist(distId, batchId, examId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// REFRESH LIST STATUS — reads from DB after any change
+// REFRESH LIST STATUS
 // ─────────────────────────────────────────────────────────────
 async function refreshListStatus() {
-  // Re-fetch just this exam to get updated status from DB
   const { data } = await db
     .from('exams')
     .select('id, status, marks, students_present')
