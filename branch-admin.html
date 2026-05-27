@@ -8,32 +8,67 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
   <link rel="stylesheet" href="css/styles.css"/>
   <style>
-    /* ── Two-panel layout ── */
-    .exam-layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 56px); }
-    .exam-list-panel { border-right:1px solid var(--border); overflow-y:auto; background:var(--white); height:calc(100vh - 56px); position:sticky; top:56px; }
-    .exam-detail-panel { overflow-y:auto; background:var(--bg); padding:20px; }
+    /* ── Summary cards ── */
+    .summary-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .stat-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:14px 16px; cursor:pointer; transition:box-shadow 0.15s, border-color 0.15s; border-left:3px solid var(--border); }
+    .stat-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .stat-card.active { border-left-color:var(--navy); box-shadow:0 0 0 1.5px var(--navy); }
+    .stat-card.c-pending.active  { border-left-color:var(--amber); box-shadow:0 0 0 1.5px var(--amber); }
+    .stat-card.c-overdue.active  { border-left-color:var(--red);   box-shadow:0 0 0 1.5px var(--red);   }
+    .stat-card.c-complete.active { border-left-color:var(--green); box-shadow:0 0 0 1.5px var(--green); }
+    .stat-card.c-pending  { border-left-color:var(--amber); }
+    .stat-card.c-overdue  { border-left-color:var(--red);   }
+    .stat-card.c-complete { border-left-color:var(--green); }
+    .stat-label { font-size:11px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; }
+    .stat-num { font-size:26px; font-weight:700; color:var(--text); line-height:1; }
+    .stat-num.amber { color:var(--amber); }
+    .stat-num.red   { color:var(--red);   }
+    .stat-num.green { color:var(--green); }
 
-    /* ── Exam list ── */
-    .exam-list-header { padding:12px 14px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--white); z-index:10; }
-    .exam-search { width:100%; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; outline:none; }
-    .exam-search:focus { border-color:var(--navy); }
-    .exam-filters { display:flex; gap:5px; margin-top:7px; flex-wrap:wrap; }
-    .exam-filters select { flex:1; min-width:80px; padding:4px 6px; border:1px solid var(--border); border-radius:5px; font-size:11.5px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
-    .exam-count { font-size:11px; color:var(--text-sub); margin-top:5px; }
+    /* ── Filter bar ── */
+    .filter-bar { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:14px; }
+    .filter-row-1 { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .filter-row-2 { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .filter-section-label { font-size:11px; font-weight:600; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.3px; margin-right:2px; white-space:nowrap; }
+    .chip { padding:4px 12px; border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-sub); background:var(--white); cursor:pointer; transition:all 0.1s; white-space:nowrap; }
+    .chip:hover { background:var(--grey-light); }
+    .chip.active { background:var(--navy-light); color:var(--navy); border-color:var(--navy); font-weight:600; }
+    .chip.overdue.active { background:var(--red-light); color:var(--red); border-color:var(--red); }
+    .chip.pending.active { background:var(--amber-light); color:var(--amber); border-color:var(--amber); }
+    .chip.complete.active { background:var(--green-light); color:var(--green); border-color:var(--green); }
+    .filter-divider { width:1px; height:20px; background:var(--border); margin:0 4px; flex-shrink:0; }
+    .filter-select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
+    .filter-search { padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; width:200px; }
+    .filter-search:focus { border-color:var(--navy); }
+    .filter-date { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text); background:var(--white); outline:none; }
+    .btn-clear-filters { padding:5px 12px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text-sub); background:var(--grey-light); cursor:pointer; margin-left:auto; }
+    .btn-clear-filters:hover { background:var(--border); }
 
-    .exam-item { padding:11px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
-    .exam-item:hover { background:var(--grey-light); }
-    .exam-item.selected { background:var(--navy-light); border-left:3px solid var(--navy); padding-left:11px; }
-    .exam-item-subject { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .exam-item-meta { font-size:11.5px; color:var(--text-sub); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-    .exam-item-date { font-size:11px; color:var(--text-sub); margin-top:3px; }
+    /* ── Exam table ── */
+    .exam-table-wrap { background:var(--white); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+    .exam-table-header { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .exam-table-title { font-size:13px; font-weight:600; color:var(--text); }
+    .exam-count-badge { font-size:11px; color:var(--text-sub); }
+    .table-scroll { overflow-x:auto; max-height:300px; overflow-y:auto; }
+    .exam-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .exam-table thead th { background:var(--grey-light); padding:8px 12px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-sub); border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0; z-index:5; }
+    .exam-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+    .exam-table tbody tr:last-child { border-bottom:none; }
+    .exam-table tbody tr:hover { background:var(--grey-light); }
+    .exam-table tbody tr.active-row { background:var(--navy-light); }
+    .exam-table tbody tr.active-row td { color:var(--navy); }
+    .exam-table tbody td { padding:7px 12px; vertical-align:middle; white-space:nowrap; color:var(--text); }
+    .exam-table tbody td.subject-col { white-space:normal; min-width:120px; font-weight:600; }
+    .exam-table tbody td.ref-col { font-size:11px; color:var(--text-sub); max-width:140px; overflow:hidden; text-overflow:ellipsis; }
+    .no-exams { text-align:center; padding:32px; color:var(--text-sub); font-size:13px; }
 
     /* ── Detail panel ── */
-    .detail-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; color:var(--text-sub); text-align:center; }
-    .detail-placeholder .material-symbols-outlined { font-size:44px; color:var(--border); margin-bottom:10px; }
+    .exam-detail-panel { background:var(--bg); }
+    .detail-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; color:var(--text-sub); text-align:center; background:var(--white); border:1px solid var(--border); border-radius:8px; }
+    .detail-placeholder .material-symbols-outlined { font-size:40px; color:var(--border); margin-bottom:10px; }
 
     /* ── Exam header ── */
-    .exam-detail-header { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+    .exam-detail-header { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:12px; }
     .exam-detail-title { font-size:16px; font-weight:700; color:var(--text); margin:0 0 7px; }
     .exam-meta-row { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-sub); }
     .exam-meta-row span { display:flex; align-items:center; gap:3px; }
@@ -76,16 +111,15 @@
     .val-msg.ok  { background:var(--green-light); color:var(--green); }
 
     /* ── Responsive ── */
-    @media(max-width:860px) {
-      .exam-layout { grid-template-columns:1fr; }
-      .exam-list-panel { height:280px; position:relative; top:0; border-right:none; border-bottom:1px solid var(--border); }
+    @media(max-width:900px) {
+      .summary-row { grid-template-columns:repeat(2,1fr); }
       .fg3 { grid-template-columns:1fr 1fr; }
     }
-    @media(max-width:540px) {
+    @media(max-width:600px) {
+      .summary-row { grid-template-columns:repeat(2,1fr); }
       .fg3, .fg2 { grid-template-columns:1fr; }
-      .exam-detail-panel { padding:12px; }
-      .dist-row { grid-template-columns:1fr 1fr; }
-      .dist-row > div:last-child { grid-column:span 2; }
+      .page-content { padding:12px; }
+      .filter-search { width:140px; }
     }
   </style>
 </head>
@@ -119,55 +153,128 @@
   </div>
 </aside>
 
-<!-- Main content -->
+<!-- Main -->
 <div class="main-content">
   <header class="topbar">
     <div class="topbar-title">Exam Entry</div>
     <div class="topbar-right">
-      <div class="btn-icon" onclick="loadExams()" title="Refresh list">
+      <div class="btn-icon" onclick="loadExams()" title="Refresh">
         <span class="material-symbols-outlined">refresh</span>
       </div>
     </div>
   </header>
 
-  <div class="exam-layout">
+  <div class="page-content">
 
-    <!-- LEFT PANEL: Exam list -->
-    <div class="exam-list-panel">
-      <div class="exam-list-header">
-        <input class="exam-search" type="text" id="examSearch" placeholder="Search subject..." oninput="filterExams()"/>
-        <div class="exam-filters">
-          <select id="fStd" onchange="filterExams()">
-            <option value="">All Std</option>
-            <option value="7">Std 7</option>
-            <option value="8">Std 8</option>
-            <option value="9">Std 9</option>
-            <option value="10">Std 10</option>
-          </select>
-          <select id="fMed" onchange="filterExams()">
-            <option value="">All Medium</option>
-            <option value="CB">CBSE</option>
-            <option value="IC">ICSE</option>
-            <option value="EM">SSC EM</option>
-            <option value="SE">SSC SE</option>
-          </select>
-        </div>
-        <div class="exam-count" id="examCount"></div>
+    <!-- Summary cards -->
+    <div class="summary-row">
+      <div class="stat-card active" id="card-all" onclick="filterByCard('all')">
+        <div class="stat-label">Total exams</div>
+        <div class="stat-num" id="cnt-all">—</div>
       </div>
-      <div id="examListBody">
-        <div class="empty-state">
-          <span class="material-symbols-outlined">hourglass_empty</span>
-          <p>Loading exams...</p>
-        </div>
+      <div class="stat-card c-pending" id="card-pending" onclick="filterByCard('pending')">
+        <div class="stat-label">Pending</div>
+        <div class="stat-num amber" id="cnt-pending">—</div>
+      </div>
+      <div class="stat-card c-overdue" id="card-overdue" onclick="filterByCard('overdue')">
+        <div class="stat-label">Overdue</div>
+        <div class="stat-num red" id="cnt-overdue">—</div>
+      </div>
+      <div class="stat-card c-complete" id="card-complete" onclick="filterByCard('complete')">
+        <div class="stat-label">Complete</div>
+        <div class="stat-num green" id="cnt-complete">—</div>
       </div>
     </div>
 
-    <!-- RIGHT PANEL: Exam detail -->
-    <div class="exam-detail-panel" id="detailPanel">
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <!-- Row 1: Status chips + search -->
+      <div class="filter-row-1">
+        <span class="filter-section-label">Status</span>
+        <span class="chip active" id="chip-all"      onclick="setStatusChip('all')">All</span>
+        <span class="chip pending" id="chip-pending" onclick="setStatusChip('pending')">Pending</span>
+        <span class="chip" id="chip-progress"        onclick="setStatusChip('progress')">In Progress</span>
+        <span class="chip overdue" id="chip-overdue" onclick="setStatusChip('overdue')">Overdue</span>
+        <span class="chip complete" id="chip-complete" onclick="setStatusChip('complete')">Complete</span>
+        <div class="filter-divider"></div>
+        <input class="filter-search" type="text" id="fSearch" placeholder="Search subject or exam..." oninput="applyFilters()"/>
+        <button class="btn-clear-filters" onclick="clearAllFilters()">
+          <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">filter_alt_off</span>
+          Clear
+        </button>
+      </div>
+      <!-- Row 2: Dropdowns -->
+      <div class="filter-row-2">
+        <span class="filter-section-label">Filter</span>
+        <select class="filter-select" id="fStd" onchange="applyFilters()">
+          <option value="">All Standards</option>
+          <option value="7">Std 7</option>
+          <option value="8">Std 8</option>
+          <option value="9">Std 9</option>
+          <option value="10">Std 10</option>
+        </select>
+        <select class="filter-select" id="fMed" onchange="applyFilters()">
+          <option value="">All Medium</option>
+          <option value="CB">CBSE</option>
+          <option value="IC">ICSE</option>
+          <option value="EM">SSC EM</option>
+          <option value="SE">SSC SE</option>
+        </select>
+        <select class="filter-select" id="fType" onchange="applyFilters()">
+          <option value="">All Types</option>
+          <option value="BT">Basic Test</option>
+          <option value="WT">Weekly Test</option>
+          <option value="UT">Unit Test</option>
+          <option value="SEM">Semester</option>
+          <option value="PRE">Prelim</option>
+        </select>
+        <select class="filter-select" id="fBatch" onchange="applyFilters()">
+          <option value="">All Batches</option>
+        </select>
+        <div class="filter-divider"></div>
+        <span class="filter-section-label">Date</span>
+        <input class="filter-date" type="date" id="fDateFrom" onchange="applyFilters()" title="From date"/>
+        <span style="font-size:12px;color:var(--text-sub)">to</span>
+        <input class="filter-date" type="date" id="fDateTo" onchange="applyFilters()" title="To date"/>
+      </div>
+    </div>
+
+    <!-- Exam table -->
+    <div class="exam-table-wrap">
+      <div class="exam-table-header">
+        <span class="exam-table-title">Exams</span>
+        <span class="exam-count-badge" id="examCountLabel"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="exam-table">
+          <thead>
+            <tr>
+              <th>Exam name</th>
+              <th>Batch</th>
+              <th>Subject</th>
+              <th>Std</th>
+              <th>Medium</th>
+              <th>Type</th>
+              <th>Exam date</th>
+              <th>Time</th>
+              <th>Marks</th>
+              <th>Students</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="examTableBody">
+            <tr><td colspan="11" class="no-exams">Loading exams...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Exam detail -->
+    <div id="detailPanel">
       <div class="detail-placeholder">
         <span class="material-symbols-outlined">touch_app</span>
-        <p style="font-weight:600;color:var(--text);margin:0 0 4px">Select an exam</p>
-        <p style="font-size:12px;margin:0">Click any exam from the list to enter details</p>
+        <p style="font-weight:600;color:var(--text);margin:0 0 4px">Select an exam from the table above</p>
+        <p style="font-size:12px;margin:0">Click any row to open the exam entry form</p>
       </div>
     </div>
 
@@ -184,10 +291,8 @@
   </div>
 </nav>
 
-<!-- Toast -->
 <div id="toast-container"></div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-helpers.js"></script>
@@ -196,13 +301,14 @@
 // ─────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────
-let me           = null;   // current user profile
-let allExams     = [];     // all exams from DB
-let filtered     = [];     // filtered exam list
-let selectedId   = null;   // currently open exam id
-let detail       = null;   // full exam detail object
-let supervisors  = [];     // master list
-let correctors   = [];     // master list
+let me           = null;
+let allExams     = [];
+let filtered     = [];
+let selectedId   = null;
+let detail       = null;
+let supervisors  = [];
+let correctors   = [];
+let activeStatus = 'all'; // tracks which card/chip is active
 
 // ─────────────────────────────────────────────────────────────
 // INIT
@@ -211,45 +317,137 @@ let correctors   = [];     // master list
   try {
     me = await requireRole('branch_admin');
     if (!me) return;
-
-    document.getElementById('sidebarName').textContent  = me.name;
-    document.getElementById('branchLabel').textContent  = me.branches?.name || 'Branch';
+    document.getElementById('sidebarName').textContent   = me.name;
+    document.getElementById('branchLabel').textContent   = me.branches?.name || 'Branch';
     document.getElementById('sidebarAvatar').textContent =
-      me.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      me.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-    // Load everything in parallel
     [supervisors, correctors] = await Promise.all([
-      getSupervisors(true),
-      getCorrectors(true),
-      loadExams(),
+      getSupervisors(true), getCorrectors(true), loadExams(),
     ]);
-  } catch(e) {
-    showToast('Failed to load: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Failed to load: ' + e.message, 'error'); }
 })();
 
 // ─────────────────────────────────────────────────────────────
-// EXAM LIST
+// LOAD EXAMS
 // ─────────────────────────────────────────────────────────────
 async function loadExams() {
   try {
     allExams = await getExams({});
-    // Annotate status on each exam from batch data
     allExams.forEach(e => { e._status = 'pending'; });
-    filtered = [...allExams];
-    renderList();
+    populateBatchDropdown();
+    updateSummaryCards();
+    applyFilters();
   } catch(e) {
-    document.getElementById('examListBody').innerHTML =
-      `<div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load exams</p></div>`;
+    document.getElementById('examTableBody').innerHTML =
+      `<tr><td colspan="11" class="no-exams" style="color:var(--red)">Could not load exams</td></tr>`;
   }
 }
 
-function renderList() {
-  const body = document.getElementById('examListBody');
-  document.getElementById('examCount').textContent = `${filtered.length} exam${filtered.length!==1?'s':''}`;
+// ─────────────────────────────────────────────────────────────
+// SUMMARY CARDS
+// ─────────────────────────────────────────────────────────────
+function updateSummaryCards() {
+  const total    = allExams.length;
+  const pending  = allExams.filter(e => e._status === 'pending').length;
+  const overdue  = allExams.filter(e => e._status === 'overdue').length;
+  const complete = allExams.filter(e => e._status === 'complete').length;
+
+  document.getElementById('cnt-all').textContent     = total;
+  document.getElementById('cnt-pending').textContent  = pending;
+  document.getElementById('cnt-overdue').textContent  = overdue;
+  document.getElementById('cnt-complete').textContent = complete;
+}
+
+function filterByCard(status) {
+  // Update active card highlight
+  ['all','pending','overdue','complete'].forEach(s => {
+    document.getElementById('card-' + s).classList.toggle('active', s === status);
+  });
+  // Sync status chip
+  setStatusChip(status === 'all' ? 'all' : status);
+}
+
+// ─────────────────────────────────────────────────────────────
+// FILTER CHIPS
+// ─────────────────────────────────────────────────────────────
+function setStatusChip(status) {
+  activeStatus = status;
+  ['all','pending','progress','overdue','complete'].forEach(s => {
+    document.getElementById('chip-' + s)?.classList.toggle('active', s === status);
+  });
+  // Sync card highlight
+  const cardKey = status === 'progress' ? 'all' : status;
+  ['all','pending','overdue','complete'].forEach(s => {
+    document.getElementById('card-' + s)?.classList.toggle('active', s === cardKey);
+  });
+  applyFilters();
+}
+
+// ─────────────────────────────────────────────────────────────
+// POPULATE BATCH DROPDOWN
+// ─────────────────────────────────────────────────────────────
+function populateBatchDropdown() {
+  const batches = [...new Set(allExams.map(e => e.batch).filter(Boolean))].sort();
+  const sel = document.getElementById('fBatch');
+  sel.innerHTML = '<option value="">All Batches</option>' +
+    batches.map(b => `<option value="${b}">${b}</option>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+// APPLY ALL FILTERS
+// ─────────────────────────────────────────────────────────────
+function applyFilters() {
+  const q        = document.getElementById('fSearch').value.toLowerCase();
+  const std      = document.getElementById('fStd').value;
+  const med      = document.getElementById('fMed').value;
+  const type     = document.getElementById('fType').value;
+  const batch    = document.getElementById('fBatch').value;
+  const dateFrom = document.getElementById('fDateFrom').value;
+  const dateTo   = document.getElementById('fDateTo').value;
+
+  filtered = allExams.filter(e => {
+    if (q      && !e.subject.toLowerCase().includes(q) && !(e.exam_ref||'').toLowerCase().includes(q)) return false;
+    if (std    && String(e.standard) !== std)   return false;
+    if (med    && e.medium !== med)             return false;
+    if (type   && e.exam_type !== type)         return false;
+    if (batch  && e.batch !== batch)            return false;
+    if (dateFrom && e.exam_date < dateFrom)     return false;
+    if (dateTo   && e.exam_date > dateTo)       return false;
+    if (activeStatus !== 'all' && e._status !== activeStatus) return false;
+    return true;
+  });
+
+  renderTable();
+}
+
+// ─────────────────────────────────────────────────────────────
+// CLEAR ALL FILTERS
+// ─────────────────────────────────────────────────────────────
+function clearAllFilters() {
+  document.getElementById('fSearch').value  = '';
+  document.getElementById('fStd').value     = '';
+  document.getElementById('fMed').value     = '';
+  document.getElementById('fType').value    = '';
+  document.getElementById('fBatch').value   = '';
+  document.getElementById('fDateFrom').value = '';
+  document.getElementById('fDateTo').value  = '';
+  activeStatus = 'all';
+  setStatusChip('all');
+  filterByCard('all');
+  applyFilters();
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER TABLE
+// ─────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('examTableBody');
+  const label = document.getElementById('examCountLabel');
+  label.textContent = `${filtered.length} exam${filtered.length !== 1 ? 's' : ''}`;
 
   if (!filtered.length) {
-    body.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>No exams found</p></div>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="no-exams">No exams match your filters</td></tr>`;
     return;
   }
 
@@ -260,61 +458,35 @@ function renderList() {
     complete: ['badge-complete', 'Complete'],
   };
 
-  body.innerHTML = filtered.map(e => {
+  tbody.innerHTML = filtered.map(e => {
     const [cls, lbl] = statusBadge[e._status] || statusBadge.pending;
     return `
-    <div class="exam-item ${selectedId===e.id?'selected':''}" onclick="openExam('${e.id}')">
-      <div class="exam-item-subject" title="${e.subject}">${e.subject}</div>
-      <div class="exam-item-meta">
-        <span>Std ${e.standard}</span>
-        <span>${getMediumLabel(e.medium)}</span>
-        <span class="badge ${cls}" style="font-size:10px;padding:1px 7px">${lbl}</span>
-      </div>
-      <div class="exam-item-date">
-        <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">calendar_today</span>
-        ${fmtDate(e.exam_date)} · ${(e.from_time||'').slice(0,5)}–${(e.to_time||'').slice(0,5)}
-      </div>
-      <div class="exam-item-date" style="margin-top:2px">
-        <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">tag</span>
-        ${e.exam_ref || '—'}
-      </div>
-      <div class="exam-item-date" style="margin-top:2px;display:flex;gap:10px">
-        <span>
-          <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">groups</span>
-          ${e.batch || '—'}
-        </span>
-        <span>
-          <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">123</span>
-          ${e.marks ? e.marks + ' marks' : '<span style="color:var(--orange)">Marks not set</span>'}
-        </span>
-      </div>
-    </div>`;
+    <tr class="${selectedId === e.id ? 'active-row' : ''}" onclick="openExam('${e.id}')">
+      <td class="ref-col" title="${e.exam_ref}">${e.exam_ref || '—'}</td>
+      <td style="font-size:11px;color:var(--text-sub);max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${e.batch}">${e.batch || '—'}</td>
+      <td class="subject-col">${e.subject}</td>
+      <td style="text-align:center">${e.standard}</td>
+      <td>${getMediumLabel(e.medium)}</td>
+      <td>${e.exam_type || '—'}</td>
+      <td>${fmtDate(e.exam_date)}</td>
+      <td>${(e.from_time||'').slice(0,5)}–${(e.to_time||'').slice(0,5)}</td>
+      <td style="text-align:center">${e.marks || '<span style="color:var(--orange);font-size:11px">Not set</span>'}</td>
+      <td style="text-align:center">${e.students_present ?? '—'}</td>
+      <td><span class="badge ${cls}">${lbl}</span></td>
+    </tr>`;
   }).join('');
 }
 
-function filterExams() {
-  const q   = document.getElementById('examSearch').value.toLowerCase();
-  const std = document.getElementById('fStd').value;
-  const med = document.getElementById('fMed').value;
-
-  filtered = allExams.filter(e => {
-    if (q   && !e.subject.toLowerCase().includes(q) && !e.exam_ref.toLowerCase().includes(q)) return false;
-    if (std && String(e.standard) !== std) return false;
-    if (med && e.medium !== med)           return false;
-    return true;
-  });
-  renderList();
-}
-
 // ─────────────────────────────────────────────────────────────
-// EXAM DETAIL
+// OPEN EXAM
 // ─────────────────────────────────────────────────────────────
 async function openExam(id) {
   selectedId = id;
-  renderList();
+  renderTable();
 
   const panel = document.getElementById('detailPanel');
   panel.innerHTML = `<div class="detail-placeholder"><span class="material-symbols-outlined" style="animation:spin 0.8s linear infinite;font-size:32px">refresh</span></div>`;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
     detail = await getExamDetail(id);
@@ -324,28 +496,28 @@ async function openExam(id) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// RENDER DETAIL
+// ─────────────────────────────────────────────────────────────
 function renderDetail() {
   const e = detail;
   document.getElementById('detailPanel').innerHTML = `
 
-    <!-- Exam header -->
     <div class="exam-detail-header">
-      <div class="exam-detail-title">${e.subject}</div>
+      <div class="exam-detail-title">${e.subject} &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-sub)">${e.exam_ref}</span></div>
       <div class="exam-meta-row">
         <span><span class="material-symbols-outlined">calendar_today</span>${fmtDate(e.exam_date)}</span>
         <span><span class="material-symbols-outlined">schedule</span>${(e.from_time||'').slice(0,5)} – ${(e.to_time||'').slice(0,5)}</span>
         <span><span class="material-symbols-outlined">school</span>Std ${e.standard} · ${getMediumLabel(e.medium)}</span>
-        <span><span class="material-symbols-outlined">quiz</span>${e.exam_type||'—'}</span>
-        <span><span class="material-symbols-outlined">info</span>${e.erp_status||'—'}</span>
+        <span><span class="material-symbols-outlined">quiz</span>${e.exam_type || '—'}</span>
+        <span><span class="material-symbols-outlined">groups</span>${e.batch}</span>
+        <span><span class="material-symbols-outlined">info</span>${e.erp_status || '—'}</span>
       </div>
     </div>
 
-    <!-- SECTION 1: General details -->
-    <div class="section-card" id="sec-general">
+    <div class="section-card">
       <div class="section-header">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined">edit_note</span> General Details
-        </h3>
+        <h3 class="section-title"><span class="material-symbols-outlined">edit_note</span> General Details</h3>
         <button class="btn btn-primary btn-sm" id="btnSaveGeneral" onclick="saveGeneral()">
           <span class="material-symbols-outlined">save</span> Save
         </button>
@@ -376,12 +548,9 @@ function renderDetail() {
       </div>
     </div>
 
-    <!-- SECTION 2: Supervisors -->
-    <div class="section-card" id="sec-supervisors">
+    <div class="section-card">
       <div class="section-header">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined">verified_user</span> Supervisors
-        </h3>
+        <h3 class="section-title"><span class="material-symbols-outlined">verified_user</span> Supervisors</h3>
       </div>
       <div class="section-body">
         <div class="sup-chips" id="supChips">${buildSupChips()}</div>
@@ -403,23 +572,19 @@ function renderDetail() {
       </div>
     </div>
 
-    <!-- SECTION 3: Paper Correctors -->
-    <div class="section-card" id="sec-correctors">
+    <div class="section-card">
       <div class="section-header">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined">draw</span> Paper Correctors
-        </h3>
-        <button class="btn btn-primary btn-sm" onclick="addBatch()" ${!e.marks?'disabled title="Save marks first"':''}>
+        <h3 class="section-title"><span class="material-symbols-outlined">draw</span> Paper Correctors</h3>
+        <button class="btn btn-primary btn-sm" onclick="addBatch()" ${!e.marks ? 'disabled title="Save marks first"' : ''}>
           <span class="material-symbols-outlined">add</span> Add Batch
         </button>
       </div>
       <div class="section-body">
-        ${!e.marks?`<div class="alert alert-warning"><span class="material-symbols-outlined">warning</span><div>Enter and save <strong>Marks</strong> in General Details before adding corrector batches.</div></div>`:''}
+        ${!e.marks ? `<div class="alert alert-warning"><span class="material-symbols-outlined">warning</span><div>Enter and save <strong>Marks</strong> before adding corrector batches.</div></div>` : ''}
         <div id="batchContainer">${buildAllBatches()}</div>
         <div id="batchVal"></div>
       </div>
     </div>
-
   `;
 }
 
@@ -427,11 +592,11 @@ function renderDetail() {
 // GENERAL DETAILS
 // ─────────────────────────────────────────────────────────────
 async function saveGeneral() {
-  const marks    = parseInt(document.getElementById('f_marks').value);
-  const students = document.getElementById('f_students').value;
-  const hours    = document.getElementById('f_hours').value;
-  const syllabus = document.getElementById('f_syllabus').value.trim();
-  const classroom= document.getElementById('f_classroom').value.trim();
+  const marks     = parseInt(document.getElementById('f_marks').value);
+  const students  = document.getElementById('f_students').value;
+  const hours     = document.getElementById('f_hours').value;
+  const syllabus  = document.getElementById('f_syllabus').value.trim();
+  const classroom = document.getElementById('f_classroom').value.trim();
 
   if (!marks || marks < 1) { showToast('Marks is required', 'error'); return; }
 
@@ -447,8 +612,16 @@ async function saveGeneral() {
     });
     showToast('General details saved', 'success');
     detail = await getExamDetail(detail.id);
+
+    // Update marks and students in allExams list
+    const idx = allExams.findIndex(e => e.id === detail.id);
+    if (idx >= 0) {
+      allExams[idx].marks            = marks;
+      allExams[idx].students_present = students ? parseInt(students) : null;
+    }
+    updateSummaryCards();
+    renderTable();
     renderDetail();
-    refreshListStatus();
   } catch(e) {
     showToast('Error: ' + e.message, 'error');
   }
@@ -473,26 +646,25 @@ function buildSupChips() {
 }
 
 function buildSupOptions() {
-  const assigned = detail.exam_supervisors?.map(es => es.supervisors?.id) || [];
+  const assigned  = detail.exam_supervisors?.map(es => es.supervisors?.id) || [];
   const available = supervisors.filter(s => !assigned.includes(s.id));
   if (!available.length) return `<option value="">All supervisors assigned</option>`;
   return `<option value="">— Select supervisor —</option>` +
     available.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 }
+
 async function addSup() {
   const supId    = document.getElementById('supSel').value;
   const classroom= document.getElementById('supClassroom').value.trim();
   if (!supId) { showToast('Select a supervisor first', 'error'); return; }
   try {
     await addExamSupervisor(detail.id, supId, classroom);
-
     showToast('Supervisor added', 'success');
     detail = await getExamDetail(detail.id);
     document.getElementById('supChips').innerHTML = buildSupChips();
     document.getElementById('supSel').innerHTML   = buildSupOptions();
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
+    document.getElementById('supClassroom').value = '';
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function removeSup(esId, name) {
@@ -503,9 +675,7 @@ async function removeSup(esId, name) {
     detail = await getExamDetail(detail.id);
     document.getElementById('supChips').innerHTML = buildSupChips();
     document.getElementById('supSel').innerHTML   = buildSupOptions();
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -519,11 +689,11 @@ function buildAllBatches() {
       <p>No corrector batches yet</p>
       <p style="font-size:11px">Click "Add Batch" above to assign a paper corrector</p>
     </div>`;
-  return batches.map((b,i) => buildBatch(b,i)).join('');
+  return batches.map((b, i) => buildBatch(b, i)).join('');
 }
 
 function buildBatch(b, idx) {
-  const sid    = b.id || ('new'+idx);
+  const sid    = b.id || ('new' + idx);
   const due    = b.due_date || '';
   const od     = due ? daysOverdue(due) : 0;
   const dueCls = od > 0 ? 'overdue' : '';
@@ -532,78 +702,57 @@ function buildBatch(b, idx) {
 
   return `
   <div class="batch-card" id="bc_${sid}">
-
-    <!-- Batch header -->
     <div class="batch-card-header">
       <span class="batch-label">
         <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">draw</span>
-        Batch ${idx+1}${corName ? ' — '+corName : ''}
+        Batch ${idx + 1}${corName ? ' — ' + corName : ''}
       </span>
       <div style="display:flex;gap:6px;align-items:center">
-        ${due ? `<span class="due-badge ${dueCls}">Due: ${fmtDate(due)}${od>0?' ('+od+'d overdue)':''}</span>` : ''}
-        ${b.id ? `<button class="btn btn-danger btn-sm" onclick="delBatch('${b.id}')">
-          <span class="material-symbols-outlined">delete</span>
-        </button>` : ''}
+        ${due ? `<span class="due-badge ${dueCls}">Due: ${fmtDate(due)}${od > 0 ? ' (' + od + 'd overdue)' : ''}</span>` : ''}
+        ${b.id ? `<button class="btn btn-danger btn-sm" onclick="delBatch('${b.id}')"><span class="material-symbols-outlined">delete</span></button>` : ''}
       </div>
     </div>
 
-    <!-- Corrector + Split -->
     <div class="fg2" style="margin-bottom:10px">
       <div class="form-group" style="margin:0">
         <label>Corrector *</label>
         <select id="bc_cor_${sid}">
           <option value="">— Select corrector —</option>
-          ${correctors.map(c=>`<option value="${c.id}" ${b.corrector_id===c.id?'selected':''}>${c.name}</option>`).join('')}
+          ${correctors.map(c => `<option value="${c.id}" ${b.corrector_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
         </select>
       </div>
       <div class="form-group" style="margin:0">
-        <label>Split Type *
-          <span style="font-weight:400;color:var(--text-sub);font-size:11px">
-            (A=papers split · B=section split)
-          </span>
-        </label>
+        <label>Split Type * <span style="font-weight:400;color:var(--text-sub);font-size:11px">(A=papers split · B=section split)</span></label>
         <select id="bc_split_${sid}">
-          <option value="A" ${(!b.split_type||b.split_type==='A')?'selected':''}>Type A — Papers split between correctors</option>
-          <option value="B" ${b.split_type==='B'?'selected':''}>Type B — Same papers, different sections</option>
+          <option value="A" ${(!b.split_type || b.split_type === 'A') ? 'selected' : ''}>Type A — Papers split between correctors</option>
+          <option value="B" ${b.split_type === 'B' ? 'selected' : ''}>Type B — Same papers, different sections</option>
         </select>
       </div>
     </div>
 
-    <!-- Papers + Marks + Amount -->
     <div class="fg3" style="margin-bottom:10px">
       <div class="form-group" style="margin:0">
         <label>Papers Sent *</label>
-        <input type="number" id="bc_ps_${sid}" value="${b.papers_sent||''}" min="1" placeholder="e.g. 20"
-          onchange="liveCalc('${sid}')"/>
+        <input type="number" id="bc_ps_${sid}" value="${b.papers_sent||''}" min="1" placeholder="e.g. 20" onchange="liveCalc('${sid}')"/>
       </div>
       <div class="form-group" style="margin:0">
-        <label>Section Marks *
-          <span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${detail.marks||'?'})</span>
-        </label>
-        <input type="number" id="bc_sm_${sid}" value="${b.section_marks||''}" min="1"
-          max="${detail.marks||999}" placeholder="e.g. ${detail.marks||100}"
-          onchange="liveCalc('${sid}')"/>
+        <label>Section Marks * <span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${detail.marks || '?'})</span></label>
+        <input type="number" id="bc_sm_${sid}" value="${b.section_marks||''}" min="1" max="${detail.marks||999}"
+          placeholder="e.g. ${detail.marks||100}" onchange="liveCalc('${sid}')"/>
       </div>
       <div class="form-group" style="margin:0">
         <label>Remuneration</label>
         <div class="field-display" id="bc_amt_${sid}">
-          ${b.papers_received && b.section_marks ? b.papers_received+' × '+b.section_marks+' marks' : '—'}
+          ${b.papers_received && b.section_marks ? b.papers_received + ' × ' + b.section_marks + ' marks' : '—'}
         </div>
       </div>
     </div>
 
-    <!-- Dates row 1: Sent date + Delivered by + Delivered on -->
     <div class="fg3" style="margin-bottom:10px">
       <div class="form-group" style="margin:0">
-        <label>Papers Sent Date *
-          <span style="font-weight:400;color:var(--text-sub);font-size:10px">
-            (exam date to +5 days)
-          </span>
-        </label>
-        <input type="date" id="bc_sd_${sid}"
-          value="${b.sent_date||''}"
-          min="${detail.exam_date}"
-          max="${addDays(detail.exam_date,5)}"
+        <label>Papers Sent Date * <span style="font-weight:400;color:var(--text-sub);font-size:10px">(exam date to +5 days)</span></label>
+        <input type="date" id="bc_sd_${sid}" value="${b.sent_date||''}"
+          min="${detail.exam_date}" max="${addDays(detail.exam_date, 5)}"
           onchange="onSentDateChange('${sid}')"/>
       </div>
       <div class="form-group" style="margin:0">
@@ -611,33 +760,22 @@ function buildBatch(b, idx) {
         <input type="text" id="bc_db_${sid}" value="${b.delivered_by||''}" placeholder="Person's name"/>
       </div>
       <div class="form-group" style="margin:0">
-        <label>Delivered On *
-          <span style="font-weight:400;color:var(--text-sub);font-size:10px">
-            (sent date to +2 days)
-          </span>
-        </label>
-        <input type="date" id="bc_do_${sid}"
-          value="${b.delivered_on||''}"
-          min="${b.sent_date||detail.exam_date}"
-          max="${b.sent_date?addDays(b.sent_date,2):''}"
+        <label>Delivered On * <span style="font-weight:400;color:var(--text-sub);font-size:10px">(sent date to +2 days)</span></label>
+        <input type="date" id="bc_do_${sid}" value="${b.delivered_on||''}"
+          min="${b.sent_date||detail.exam_date}" max="${b.sent_date ? addDays(b.sent_date, 2) : ''}"
           onchange="liveCalc('${sid}')"/>
       </div>
     </div>
 
-    <!-- Dates row 2: Due date (auto) + Return date + Papers received -->
     <div class="fg3" style="margin-bottom:10px">
       <div class="form-group" style="margin:0">
         <label>Due Date <span style="font-weight:400;color:var(--green);font-size:10px">auto-calculated</span></label>
-        <div class="field-display ${dueCls}" id="bc_due_${sid}">
-          ${due ? fmtDate(due) : '—'}
-        </div>
+        <div class="field-display ${dueCls}" id="bc_due_${sid}">${due ? fmtDate(due) : '—'}</div>
       </div>
       <div class="form-group" style="margin:0">
         <label>Return Date</label>
-        <input type="date" id="bc_rd_${sid}"
-          value="${b.return_date||''}"
-          min="${b.delivered_on||''}"
-          onchange="liveCalc('${sid}')"/>
+        <input type="date" id="bc_rd_${sid}" value="${b.return_date||''}"
+          min="${b.delivered_on||''}" onchange="liveCalc('${sid}')"/>
       </div>
       <div class="form-group" style="margin:0">
         <label>Papers Received</label>
@@ -646,14 +784,12 @@ function buildBatch(b, idx) {
       </div>
     </div>
 
-    <!-- Save batch button -->
     <div style="text-align:right">
       <button class="btn btn-primary btn-sm" onclick="saveBatch('${b.id||''}','${idx}','${sid}')">
         <span class="material-symbols-outlined">save</span> Save Batch
       </button>
     </div>
 
-    <!-- Distributions (only for saved batches) -->
     ${b.id ? `
       <hr style="border:none;border-top:1px solid var(--border);margin:12px 0 10px"/>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -666,20 +802,14 @@ function buildBatch(b, idx) {
         </button>
       </div>
       <div id="dists_${b.id}">${buildDists(b.id, dists)}</div>
-    ` : `<p style="font-size:12px;color:var(--text-sub);margin:10px 0 0;text-align:center">
-      Save this batch first, then you can add distributions.
-    </p>`}
-
+    ` : `<p style="font-size:12px;color:var(--text-sub);margin:10px 0 0;text-align:center">Save this batch first, then you can add distributions.</p>`}
   </div>`;
 }
 
-// ── Live calculations on input change ────────────────────────
 function liveCalc(sid) {
-  // Update due date preview
   const deliveredOn  = document.getElementById(`bc_do_${sid}`)?.value;
   const sectionMarks = parseInt(document.getElementById(`bc_sm_${sid}`)?.value) || 0;
   const dueEl        = document.getElementById(`bc_due_${sid}`);
-
   if (dueEl && deliveredOn && sectionMarks) {
     const due = calcDueDate(deliveredOn, sectionMarks);
     const od  = daysOverdue(due);
@@ -689,19 +819,14 @@ function liveCalc(sid) {
     dueEl.textContent = '—';
     dueEl.className   = 'field-display';
   }
-
-  // Update amount display
   const papersRec = parseInt(document.getElementById(`bc_pr_${sid}`)?.value) || 0;
   const amtEl     = document.getElementById(`bc_amt_${sid}`);
-  if (amtEl) {
-    amtEl.textContent = (papersRec && sectionMarks) ? `${papersRec} × ${sectionMarks} marks` : '—';
-  }
+  if (amtEl) amtEl.textContent = (papersRec && sectionMarks) ? `${papersRec} × ${sectionMarks} marks` : '—';
 }
 
-// Update delivered date constraints when sent date changes
 function onSentDateChange(sid) {
-  const sentDate  = document.getElementById(`bc_sd_${sid}`)?.value;
-  const doInput   = document.getElementById(`bc_do_${sid}`);
+  const sentDate = document.getElementById(`bc_sd_${sid}`)?.value;
+  const doInput  = document.getElementById(`bc_do_${sid}`);
   if (!doInput || !sentDate) return;
   doInput.min = sentDate;
   doInput.max = addDays(sentDate, CONFIG.DATE_RULES.DELIVERED_MAX_DAYS);
@@ -709,7 +834,6 @@ function onSentDateChange(sid) {
   liveCalc(sid);
 }
 
-// ── Save batch ────────────────────────────────────────────────
 async function saveBatch(batchId, idx, sid) {
   const correctorId  = document.getElementById(`bc_cor_${sid}`)?.value;
   const splitType    = document.getElementById(`bc_split_${sid}`)?.value;
@@ -721,56 +845,40 @@ async function saveBatch(batchId, idx, sid) {
   const returnDate   = document.getElementById(`bc_rd_${sid}`)?.value;
   const papersRec    = parseInt(document.getElementById(`bc_pr_${sid}`)?.value) || null;
 
-  // Required field checks
-  if (!correctorId)  { showToast('Please select a corrector', 'error'); return; }
-  if (!papersSent || papersSent < 1) { showToast('Papers sent is required', 'error'); return; }
+  if (!correctorId)               { showToast('Please select a corrector', 'error'); return; }
+  if (!papersSent || papersSent < 1)  { showToast('Papers sent is required', 'error'); return; }
   if (!sectionMarks || sectionMarks < 1) { showToast('Section marks is required', 'error'); return; }
-  if (!sentDate)     { showToast('Papers sent date is required', 'error'); return; }
-  if (!deliveredOn)  { showToast('Delivered on date is required', 'error'); return; }
+  if (!sentDate)                  { showToast('Papers sent date is required', 'error'); return; }
+  if (!deliveredOn)               { showToast('Delivered on date is required', 'error'); return; }
 
-  // Date range checks
   if (!validateSentDate(detail.exam_date, sentDate)) {
-    showToast(`Sent date must be between exam date (${fmtDate(detail.exam_date)}) and +5 days`, 'error');
-    return;
+    showToast(`Sent date must be between exam date (${fmtDate(detail.exam_date)}) and +5 days`, 'error'); return;
   }
   if (!validateDeliveredDate(sentDate, deliveredOn)) {
-    showToast(`Delivered date must be within 2 days of sent date (${fmtDate(sentDate)})`, 'error');
-    return;
+    showToast(`Delivered date must be within 2 days of sent date (${fmtDate(sentDate)})`, 'error'); return;
   }
   if (returnDate && !validateReturnDate(deliveredOn, returnDate)) {
-    showToast('Return date cannot be before delivered date', 'error');
-    return;
+    showToast('Return date cannot be before delivered date', 'error'); return;
   }
-
-  // Section marks must not exceed exam marks
   if (detail.marks && sectionMarks > detail.marks) {
-    showToast(`Section marks (${sectionMarks}) cannot exceed exam marks (${detail.marks})`, 'error');
-    return;
+    showToast(`Section marks (${sectionMarks}) cannot exceed exam marks (${detail.marks})`, 'error'); return;
   }
 
   try {
     await saveCorrectorBatch({
-      id:              batchId || undefined,
-      exam_id:         detail.id,
-      corrector_id:    correctorId,
-      split_type:      splitType,
-      papers_sent:     papersSent,
-      section_marks:   sectionMarks,
-      sent_date:       sentDate,
-      delivered_by:    deliveredBy || null,
-      delivered_on:    deliveredOn,
-      return_date:     returnDate || null,
+      id: batchId || undefined, exam_id: detail.id,
+      corrector_id: correctorId, split_type: splitType,
+      papers_sent: papersSent, section_marks: sectionMarks,
+      sent_date: sentDate, delivered_by: deliveredBy || null,
+      delivered_on: deliveredOn, return_date: returnDate || null,
       papers_received: papersRec,
     });
-
     showToast('Batch saved successfully', 'success');
     detail = await getExamDetail(detail.id);
     document.getElementById('batchContainer').innerHTML = buildAllBatches();
     showBatchValidation();
     refreshListStatus();
-  } catch(e) {
-    showToast('Error saving batch: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Error saving batch: ' + e.message, 'error'); }
 }
 
 async function delBatch(batchId) {
@@ -782,33 +890,26 @@ async function delBatch(batchId) {
     document.getElementById('batchContainer').innerHTML = buildAllBatches();
     showBatchValidation();
     refreshListStatus();
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-// ── Cross-batch validation ────────────────────────────────────
 function showBatchValidation() {
   const el      = document.getElementById('batchVal');
   const batches = detail.corrector_batches || [];
-  if (!el || batches.length < 2) { if(el) el.innerHTML=''; return; }
-
+  if (!el || batches.length < 2) { if (el) el.innerHTML = ''; return; }
   const msgs = [];
-
   const typeA = batches.filter(b => b.split_type === 'A');
   if (typeA.length > 1 && detail.students_present) {
-    const sum = typeA.reduce((s,b)=>s+(b.papers_sent||0),0);
+    const sum = typeA.reduce((s, b) => s + (b.papers_sent || 0), 0);
     if (sum !== detail.students_present)
       msgs.push(`Type A: Papers sent total (${sum}) ≠ students present (${detail.students_present})`);
   }
-
   const typeB = batches.filter(b => b.split_type === 'B');
   if (typeB.length > 1 && detail.marks) {
-    const sum = typeB.reduce((s,b)=>s+(b.section_marks||0),0);
+    const sum = typeB.reduce((s, b) => s + (b.section_marks || 0), 0);
     if (sum !== detail.marks)
       msgs.push(`Type B: Section marks total (${sum}) ≠ exam marks (${detail.marks})`);
   }
-
   if (msgs.length) {
     el.innerHTML = msgs.map(m =>
       `<div class="val-msg err"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">warning</span> ${m}</div>`
@@ -818,31 +919,41 @@ function showBatchValidation() {
   }
 }
 
+function addBatch() {
+  if (!detail.marks) { showToast('Save Marks in General Details first', 'error'); return; }
+  const container = document.getElementById('batchContainer');
+  const empty = container.querySelector('.empty-state');
+  if (empty) empty.parentElement?.removeChild(empty);
+  const idx   = detail.corrector_batches?.length || 0;
+  const dummy = {
+    id:null, corrector_id:null, split_type:'A', papers_sent:null,
+    section_marks:null, sent_date:null, delivered_by:null, delivered_on:null,
+    return_date:null, papers_received:null, distributions:[], correctors:null,
+    due_date:null, is_overdue:false,
+  };
+  const wrap = document.createElement('div');
+  wrap.innerHTML = buildBatch(dummy, idx);
+  container.appendChild(wrap.firstElementChild);
+}
+
 // ─────────────────────────────────────────────────────────────
 // DISTRIBUTIONS
 // ─────────────────────────────────────────────────────────────
 function buildDists(batchId, dists) {
-  if (!dists.length)
-    return `<div style="font-size:12px;color:var(--text-sub);padding:2px 0">No distributions recorded yet</div>`;
-
+  if (!dists.length) return `<div style="font-size:12px;color:var(--text-sub);padding:2px 0">No distributions recorded yet</div>`;
   return dists.map(d => `
     <div class="dist-row" id="dr_${d.id}">
       <div class="form-group" style="margin:0">
         <label>Date</label>
-        <input type="date" id="dd_${d.id}" value="${d.distribution_date||''}"
-          min="${detail.exam_date}"/>
+        <input type="date" id="dd_${d.id}" value="${d.distribution_date||''}" min="${detail.exam_date}"/>
       </div>
       <div class="form-group" style="margin:0">
         <label>Papers Distributed</label>
         <input type="number" id="dp_${d.id}" value="${d.papers_distributed||''}" min="1"/>
       </div>
       <div style="display:flex;gap:4px;align-items:flex-end;padding-bottom:1px">
-        <button class="btn btn-primary btn-sm" onclick="saveDist('${d.id}','${batchId}')">
-          <span class="material-symbols-outlined">save</span>
-        </button>
-        <button class="btn btn-danger btn-sm" onclick="delDist('${d.id}','${batchId}')">
-          <span class="material-symbols-outlined">delete</span>
-        </button>
+        <button class="btn btn-primary btn-sm" onclick="saveDist('${d.id}','${batchId}')"><span class="material-symbols-outlined">save</span></button>
+        <button class="btn btn-danger btn-sm" onclick="delDist('${d.id}','${batchId}')"><span class="material-symbols-outlined">delete</span></button>
       </div>
     </div>`).join('');
 }
@@ -850,33 +961,18 @@ function buildDists(batchId, dists) {
 function addDist(batchId) {
   const container = document.getElementById(`dists_${batchId}`);
   const tempId    = 'tmp_' + Date.now();
-
-  // Remove "no distributions yet" text
   if (container.querySelector('div:not(.dist-row)')) container.innerHTML = '';
-
-  // Find return date of this batch to use as min
-  const batch    = detail.corrector_batches?.find(b => b.id === batchId);
-  const minDate  = batch?.return_date || detail.exam_date;
-
+  const batch   = detail.corrector_batches?.find(b => b.id === batchId);
+  const minDate = batch?.return_date || detail.exam_date;
   const row = document.createElement('div');
   row.className = 'dist-row';
   row.id = `dr_${tempId}`;
   row.innerHTML = `
-    <div class="form-group" style="margin:0">
-      <label>Date</label>
-      <input type="date" id="dd_${tempId}" min="${minDate}"/>
-    </div>
-    <div class="form-group" style="margin:0">
-      <label>Papers Distributed</label>
-      <input type="number" id="dp_${tempId}" min="1" placeholder="e.g. 20"/>
-    </div>
+    <div class="form-group" style="margin:0"><label>Date</label><input type="date" id="dd_${tempId}" min="${minDate}"/></div>
+    <div class="form-group" style="margin:0"><label>Papers Distributed</label><input type="number" id="dp_${tempId}" min="1" placeholder="e.g. 20"/></div>
     <div style="display:flex;gap:4px;align-items:flex-end;padding-bottom:1px">
-      <button class="btn btn-primary btn-sm" onclick="saveNewDist('${tempId}','${batchId}')">
-        <span class="material-symbols-outlined">save</span>
-      </button>
-      <button class="btn btn-danger btn-sm" onclick="document.getElementById('dr_${tempId}').remove()">
-        <span class="material-symbols-outlined">delete</span>
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewDist('${tempId}','${batchId}')"><span class="material-symbols-outlined">save</span></button>
+      <button class="btn btn-danger btn-sm" onclick="document.getElementById('dr_${tempId}').remove()"><span class="material-symbols-outlined">delete</span></button>
     </div>`;
   container.appendChild(row);
 }
@@ -886,16 +982,13 @@ async function saveNewDist(tempId, batchId) {
   const papers = parseInt(document.getElementById(`dp_${tempId}`)?.value);
   if (!date)   { showToast('Date is required', 'error'); return; }
   if (!papers) { showToast('Papers distributed is required', 'error'); return; }
-
   try {
     await saveDistribution({ batch_id: batchId, papers_distributed: papers, distribution_date: date });
     showToast('Distribution saved', 'success');
     detail = await getExamDetail(detail.id);
     const batch = detail.corrector_batches?.find(b => b.id === batchId);
     if (batch) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, batch.distributions);
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function saveDist(distId, batchId) {
@@ -905,9 +998,7 @@ async function saveDist(distId, batchId) {
   try {
     await saveDistribution({ id: distId, batch_id: batchId, papers_distributed: papers, distribution_date: date });
     showToast('Distribution updated', 'success');
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function delDist(distId, batchId) {
@@ -918,29 +1009,7 @@ async function delDist(distId, batchId) {
     detail = await getExamDetail(detail.id);
     const batch = detail.corrector_batches?.find(b => b.id === batchId);
     if (batch) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, batch.distributions);
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
-}
-
-// ── Add new empty batch row ───────────────────────────────────
-function addBatch() {
-  if (!detail.marks) { showToast('Save Marks in General Details first', 'error'); return; }
-
-  const container = document.getElementById('batchContainer');
-  // Remove empty state
-  const empty = container.querySelector('.empty-state');
-  if (empty) empty.parentElement?.removeChild(empty);
-
-  const idx   = detail.corrector_batches?.length || 0;
-  const dummy = { id:null, corrector_id:null, split_type:'A', papers_sent:null,
-                  section_marks:null, sent_date:null, delivered_by:null,
-                  delivered_on:null, return_date:null, papers_received:null,
-                  distributions:[], correctors:null, due_date:null, is_overdue:false };
-
-  const wrap = document.createElement('div');
-  wrap.innerHTML = buildBatch(dummy, idx);
-  container.appendChild(wrap.firstElementChild);
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -957,13 +1026,12 @@ function refreshListStatus() {
   const batches = detail.corrector_batches || [];
   const idx = allExams.findIndex(e => e.id === detail.id);
   if (idx < 0) return;
-
-  if (!batches.length)                          allExams[idx]._status = 'pending';
-  else if (batches.some(b => b.is_overdue))     allExams[idx]._status = 'overdue';
-  else if (batches.every(b => b.return_date))   allExams[idx]._status = 'complete';
-  else                                           allExams[idx]._status = 'progress';
-
-  filterExams();
+  if (!batches.length)                        allExams[idx]._status = 'pending';
+  else if (batches.some(b => b.is_overdue))   allExams[idx]._status = 'overdue';
+  else if (batches.every(b => b.return_date)) allExams[idx]._status = 'complete';
+  else                                         allExams[idx]._status = 'progress';
+  updateSummaryCards();
+  applyFilters();
 }
 </script>
 
