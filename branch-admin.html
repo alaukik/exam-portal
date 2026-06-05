@@ -132,6 +132,9 @@
     .field-display { padding:7px 10px; background:var(--grey-light); border:1px solid var(--border); border-radius:6px; font-size:13px; color:var(--text-sub); min-height:34px; }
     .field-display.overdue { background:var(--red-light); color:var(--red); border-color:var(--red-light); }
 
+    /* ── Snap hint ── */
+    .snap-hint { font-size:11px; color:var(--red); margin-top:3px; min-height:14px; }
+
     /* ── Validation ── */
     .val-msg { font-size:12px; padding:7px 10px; border-radius:5px; margin-top:8px; }
     .val-msg.err { background:var(--red-light); color:var(--red); }
@@ -829,8 +832,13 @@ function buildBatch(b, idx) {
 
     <div class="fg3" style="margin-bottom:10px">
       <div class="form-group" style="margin:0">
-        <label>Papers Sent *</label>
-        <input type="number" id="bc_ps_${sid}" value="${b.papers_sent||''}" min="1" placeholder="e.g. 20" onchange="liveCalc('${sid}')"/>
+        <label>Papers Sent * ${detail.students_present ? `<span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${detail.students_present})</span>` : ''}</label>
+        <input type="number" id="bc_ps_${sid}" value="${b.papers_sent||''}" min="1"
+          ${detail.students_present ? `max="${detail.students_present}"` : 'disabled'}
+          placeholder="${detail.students_present ? 'e.g. 20' : 'Save students present first'}"
+          oninput="snapToMax('bc_ps_${sid}', ${detail.students_present || 0}, 'students present')"
+          onchange="liveCalc('${sid}')"/>
+        <div class="snap-hint" id="hint_bc_ps_${sid}"></div>
       </div>
       <div class="form-group" style="margin:0">
         <label>Section Marks * <span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${detail.marks || '?'})</span></label>
@@ -875,9 +883,13 @@ function buildBatch(b, idx) {
           min="${b.delivered_on||''}" onchange="liveCalc('${sid}')"/>
       </div>
       <div class="form-group" style="margin:0">
-        <label>Papers Received</label>
+        <label>Papers Received ${b.papers_sent ? `<span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${b.papers_sent})</span>` : ''}</label>
         <input type="number" id="bc_pr_${sid}" value="${b.papers_received||''}" min="0"
-          placeholder="e.g. 20" onchange="liveCalc('${sid}')"/>
+          ${b.papers_sent ? `max="${b.papers_sent}"` : ''}
+          placeholder="e.g. 20"
+          oninput="snapToMaxField('bc_pr_${sid}', 'bc_ps_${sid}', 'papers sent')"
+          onchange="liveCalc('${sid}')"/>
+        <div class="snap-hint" id="hint_bc_pr_${sid}"></div>
       </div>
     </div>
 
@@ -961,6 +973,19 @@ async function saveBatch(batchId, idx, sid) {
     showToast(`Section marks (${sectionMarks}) cannot exceed exam marks (${detail.marks})`, 'error'); return;
   }
 
+  // Students present must be saved first
+  if (!detail.students_present) {
+    showToast('Save Students Present in General Details before adding batches', 'error'); return;
+  }
+  // Papers sent cannot exceed students present
+  if (papersSent > detail.students_present) {
+    showToast(`Papers sent (${papersSent}) cannot exceed students present (${detail.students_present})`, 'error'); return;
+  }
+  // Papers received cannot exceed papers sent
+  if (papersRec && papersRec > papersSent) {
+    showToast(`Papers received (${papersRec}) cannot exceed papers sent (${papersSent})`, 'error'); return;
+  }
+
   try {
     await saveCorrectorBatch({
       id: batchId || undefined, exam_id: detail.id,
@@ -1033,6 +1058,8 @@ function addBatch() {
 // DISTRIBUTIONS
 // ─────────────────────────────────────────────────────────────
 function buildDists(batchId, dists) {
+  const batch  = detail.corrector_batches?.find(b => b.id === batchId);
+  const maxRec = batch?.papers_received || 0;
   if (!dists.length) return `<div style="font-size:12px;color:var(--text-sub);padding:2px 0">No distributions recorded yet</div>`;
   return dists.map(d => `
     <div class="dist-row" id="dr_${d.id}">
@@ -1041,8 +1068,11 @@ function buildDists(batchId, dists) {
         <input type="date" id="dd_${d.id}" value="${d.distribution_date||''}" min="${detail.exam_date}"/>
       </div>
       <div class="form-group" style="margin:0">
-        <label>Papers Distributed</label>
-        <input type="number" id="dp_${d.id}" value="${d.papers_distributed||''}" min="1"/>
+        <label>Papers Distributed ${maxRec ? `<span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${maxRec})</span>` : ''}</label>
+        <input type="number" id="dp_${d.id}" value="${d.papers_distributed||''}" min="1"
+          ${maxRec ? `max="${maxRec}"` : ''}
+          oninput="snapToMax('dp_${d.id}', ${maxRec}, 'papers received')"/>
+        <div class="snap-hint" id="hint_dp_${d.id}"></div>
       </div>
       <div style="display:flex;gap:4px;align-items:flex-end;padding-bottom:1px">
         <button class="btn btn-primary btn-sm" onclick="saveDist('${d.id}','${batchId}')"><span class="material-symbols-outlined">save</span></button>
@@ -1054,15 +1084,28 @@ function buildDists(batchId, dists) {
 function addDist(batchId) {
   const container = document.getElementById(`dists_${batchId}`);
   const tempId    = 'tmp_' + Date.now();
-  if (container.querySelector('div:not(.dist-row)')) container.innerHTML = '';
   const batch   = detail.corrector_batches?.find(b => b.id === batchId);
+  const maxRec  = batch?.papers_received || 0;
+
+  // Block adding distribution if papers received not entered
+  if (!maxRec) {
+    showToast('Enter and save Papers Received on this batch first', 'error');
+    return;
+  }
+
+  if (container.querySelector('div:not(.dist-row)')) container.innerHTML = '';
   const minDate = batch?.return_date || detail.exam_date;
   const row = document.createElement('div');
   row.className = 'dist-row';
   row.id = `dr_${tempId}`;
   row.innerHTML = `
     <div class="form-group" style="margin:0"><label>Date</label><input type="date" id="dd_${tempId}" min="${minDate}"/></div>
-    <div class="form-group" style="margin:0"><label>Papers Distributed</label><input type="number" id="dp_${tempId}" min="1" placeholder="e.g. 20"/></div>
+    <div class="form-group" style="margin:0">
+      <label>Papers Distributed <span style="font-weight:400;color:var(--text-sub);font-size:11px">(max ${maxRec})</span></label>
+      <input type="number" id="dp_${tempId}" min="1" max="${maxRec}" placeholder="e.g. 20"
+        oninput="snapToMax('dp_${tempId}', ${maxRec}, 'papers received')"/>
+      <div class="snap-hint" id="hint_dp_${tempId}"></div>
+    </div>
     <div style="display:flex;gap:4px;align-items:flex-end;padding-bottom:1px">
       <button class="btn btn-primary btn-sm" onclick="saveNewDist('${tempId}','${batchId}')"><span class="material-symbols-outlined">save</span></button>
       <button class="btn btn-danger btn-sm" onclick="document.getElementById('dr_${tempId}').remove()"><span class="material-symbols-outlined">delete</span></button>
@@ -1075,12 +1118,19 @@ async function saveNewDist(tempId, batchId) {
   const papers = parseInt(document.getElementById(`dp_${tempId}`)?.value);
   if (!date)   { showToast('Date is required', 'error'); return; }
   if (!papers) { showToast('Papers distributed is required', 'error'); return; }
+
+  const batch  = detail.corrector_batches?.find(b => b.id === batchId);
+  const maxRec = batch?.papers_received || 0;
+  if (papers > maxRec) {
+    showToast(`Papers distributed (${papers}) cannot exceed papers received (${maxRec})`, 'error'); return;
+  }
+
   try {
     await saveDistribution({ batch_id: batchId, papers_distributed: papers, distribution_date: date });
     showToast('Distribution saved', 'success');
     detail = await getExamDetail(detail.id);
-    const batch = detail.corrector_batches?.find(b => b.id === batchId);
-    if (batch) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, batch.distributions);
+    const b2 = detail.corrector_batches?.find(b => b.id === batchId);
+    if (b2) document.getElementById(`dists_${batchId}`).innerHTML = buildDists(batchId, b2.distributions);
     await refreshListStatus();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
@@ -1089,6 +1139,13 @@ async function saveDist(distId, batchId) {
   const date   = document.getElementById(`dd_${distId}`)?.value;
   const papers = parseInt(document.getElementById(`dp_${distId}`)?.value);
   if (!date || !papers) { showToast('Date and papers are required', 'error'); return; }
+
+  const batch  = detail.corrector_batches?.find(b => b.id === batchId);
+  const maxRec = batch?.papers_received || 0;
+  if (papers > maxRec) {
+    showToast(`Papers distributed (${papers}) cannot exceed papers received (${maxRec})`, 'error'); return;
+  }
+
   try {
     await saveDistribution({ id: distId, batch_id: batchId, papers_distributed: papers, distribution_date: date });
     showToast('Distribution updated', 'success');
@@ -1138,6 +1195,31 @@ function addDays(dateStr, days) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
   return d.toISOString().split('T')[0];
+}
+
+// ── Snap + warn: if value exceeds max, snap it down and show a hint ──
+function snapToMax(fieldId, max, maxLabel) {
+  const el   = document.getElementById(fieldId);
+  const hint = document.getElementById('hint_' + fieldId);
+  if (!el) return;
+  const val = parseInt(el.value);
+  if (!max || isNaN(val)) { if (hint) hint.textContent = ''; return; }
+  if (val > max) {
+    el.value = max;
+    if (hint) {
+      hint.textContent = `Limited to ${max} (${maxLabel})`;
+      setTimeout(() => { if (hint) hint.textContent = ''; }, 2500);
+    }
+  } else {
+    if (hint) hint.textContent = '';
+  }
+}
+
+// ── Snap based on another field's current value (used for papers received) ──
+function snapToMaxField(fieldId, sourceFieldId, maxLabel) {
+  const srcEl = document.getElementById(sourceFieldId);
+  const max   = parseInt(srcEl?.value) || 0;
+  snapToMax(fieldId, max, maxLabel);
 }
 </script>
 
