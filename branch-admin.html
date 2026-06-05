@@ -383,7 +383,7 @@ const STATUS = {
       me.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
     [supervisors, correctors] = await Promise.all([
-      getSupervisors(true), getCorrectors(true), loadExams(),
+      getSupervisors(true, me.branch_id), getCorrectors(true), loadExams(),
     ]);
   } catch(e) { showToast('Failed to load: ' + e.message, 'error'); }
 })();
