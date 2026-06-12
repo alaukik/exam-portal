@@ -372,7 +372,12 @@ function parseERPDate(str) {
     const clean = str.split(',')[0].trim();
     const d = new Date(clean);
     if (isNaN(d)) return null;
-    return d.toISOString().split('T')[0];
+    // Use LOCAL date parts, NOT toISOString() — toISOString() converts to UTC
+    // and shifts the day back by one for IST (and any timezone ahead of UTC).
+    const y   = d.getFullYear();
+    const m   = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   } catch { return null; }
 }
 
@@ -460,17 +465,18 @@ async function recalcExamStatus(examId) {
     dists = d || [];
   }
 
- let status = 'pending';
+  let status = 'pending';
 
   if (batches && batches.length > 0) {
-    const anyDist            = dists.length > 0;
-    const anyUnreturned      = batches.some(b => !b.return_date);
-    const anyActivelyOverdue = batches.some(b => !b.return_date && b.is_overdue);
+    const anyOverdue    = batches.some(b => b.is_overdue);
+    const allReturned   = batches.every(b => b.return_date);
+    const anyUnreturned = batches.some(b => !b.return_date);
+    const anyDist       = dists.length > 0;
 
-    if (anyActivelyOverdue)      status = 'overdue';
-    else if (anyUnreturned)      status = 'progress';
-    else if (!anyDist)           status = 'not_distributed';
-    else                         status = 'complete';
+    if (anyOverdue)                   status = 'overdue';
+    else if (allReturned && !anyDist) status = 'not_distributed';
+    else if (anyUnreturned)           status = 'progress';
+    else if (allReturned && anyDist)  status = 'complete';
   }
 
   await db.from('exams').update({ status }).eq('id', examId);
