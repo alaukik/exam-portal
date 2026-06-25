@@ -448,35 +448,52 @@ async function updateExam(examId, updates) {
 // ============================================================
 // EXAM STATUS — recalculate and save
 // ============================================================
+// Status priority (first match wins):
+//   1. no corrector batches                          → pending
+//   2. students_present = sum(papers_distributed)    → complete
+//   3. any batch returned                            → not_distributed
+//   4. any batch past its due date (due_date < today)→ overdue
+//   5. otherwise                                     → progress
+// Note: does NOT use the is_overdue column (which stays true after a late
+// return). Overdue is decided by comparing due_date to today, live.
 
 async function recalcExamStatus(examId) {
-  const { data: batches } = await db
-    .from('corrector_batches')
-    .select('id, is_overdue, return_date')
-    .eq('exam_id', examId);
-
-  const batchIds = (batches || []).map(b => b.id);
-  let dists = [];
-  if (batchIds.length > 0) {
-    const { data: d } = await db
-      .from('distributions')
-      .select('id')
-      .in('batch_id', batchIds);
-    dists = d || [];
-  }
+  // Fetch this exam's batches (due + return dates) and its students_present
+  const [{ data: batches }, { data: exam }] = await Promise.all([
+    db.from('corrector_batches')
+      .select('id, due_date, return_date')
+      .eq('exam_id', examId),
+    db.from('exams')
+      .select('students_present')
+      .eq('id', examId)
+      .single(),
+  ]);
 
   let status = 'pending';
 
   if (batches && batches.length > 0) {
-    const anyOverdue    = batches.some(b => b.is_overdue);
-    const allReturned   = batches.every(b => b.return_date);
-    const anyUnreturned = batches.some(b => !b.return_date);
-    const anyDist       = dists.length > 0;
+    // Sum papers distributed across all of this exam's batches
+    const batchIds = batches.map(b => b.id);
+    const { data: dists } = await db
+      .from('distributions')
+      .select('papers_distributed')
+      .in('batch_id', batchIds);
+    const totalDistributed = (dists || [])
+      .reduce((sum, d) => sum + (d.papers_distributed || 0), 0);
 
-    if (anyOverdue)                   status = 'overdue';
-    else if (allReturned && !anyDist) status = 'not_distributed';
-    else if (anyUnreturned)           status = 'progress';
-    else if (allReturned && anyDist)  status = 'complete';
+    const studentsPresent = exam?.students_present || 0;
+
+    // Today as local YYYY-MM-DD, to compare against batch due_date strings
+    const t        = new Date();
+    const todayStr = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+
+    const anyReturned = batches.some(b => b.return_date);
+    const anyPastDue  = batches.some(b => b.due_date && b.due_date < todayStr);
+
+    if (studentsPresent > 0 && totalDistributed === studentsPresent) status = 'complete';
+    else if (anyReturned)                                            status = 'not_distributed';
+    else if (anyPastDue)                                             status = 'overdue';
+    else                                                             status = 'progress';
   }
 
   await db.from('exams').update({ status }).eq('id', examId);
