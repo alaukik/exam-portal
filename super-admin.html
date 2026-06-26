@@ -336,7 +336,15 @@
             </button>
           </div>
           <div class="card-body">
-            <div class="grid-2" style="grid-template-columns:repeat(4,1fr) 1.4fr;align-items:end;gap:10px">
+            <div class="grid-2" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-items:end;gap:10px">
+              <div class="form-group" style="margin:0">
+                <label>From Date</label>
+                <input type="date" id="exFromDate" onchange="loadAllExamsReport()"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>To Date</label>
+                <input type="date" id="exToDate" onchange="loadAllExamsReport()"/>
+              </div>
               <div class="form-group" style="margin:0">
                 <label>Status</label>
                 <select id="exFilStatus" onchange="renderExamsReport()">
@@ -375,10 +383,10 @@
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Exam Ref</th><th>Center</th><th>Subject</th><th>Batch</th><th>Std</th><th>Medium</th><th>Exam Date</th><th>Status</th></tr>
+                  <tr><th>Exam Ref</th><th>Center</th><th>Subject</th><th>Batch</th><th>Supervisor(s)</th><th>Exam Date</th><th>Due</th><th>Return</th><th>Status</th></tr>
                 </thead>
                 <tbody id="examsRepBody">
-                  <tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+                  <tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
                 </tbody>
               </table>
             </div>
@@ -1226,20 +1234,59 @@ const EXAM_STATUS = {
 let allExamsData  = null;
 let examsFiltered = [];
 
+// Default the date range to the last two weeks (today − 14 days → today)
+function setDefaultExamDates() {
+  const fromEl = document.getElementById('exFromDate');
+  const toEl   = document.getElementById('exToDate');
+  if (fromEl.value && toEl.value) return;
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const to = new Date();
+  const from = new Date(); from.setDate(from.getDate() - 14);
+  fromEl.value = fmt(from);
+  toEl.value   = fmt(to);
+}
+
+// Per-exam rollups across this exam's batches / supervisors
+function examSupervisors(e) {
+  return (e.exam_supervisors || []).map(s => s.supervisors?.name).filter(Boolean).join(', ') || '—';
+}
+function examDueDate(e) {            // earliest due date across batches
+  const ds = (e.corrector_batches || []).map(b => b.due_date).filter(Boolean).sort();
+  return ds.length ? ds[0] : null;
+}
+function examReturnDate(e) {         // latest return date across batches
+  const rs = (e.corrector_batches || []).map(b => b.return_date).filter(Boolean).sort();
+  return rs.length ? rs[rs.length - 1] : null;
+}
+
 async function loadAllExamsReport() {
+  setDefaultExamDates();
+  const from = document.getElementById('exFromDate').value;
+  const to   = document.getElementById('exToDate').value;
+  if (from && to && from > to) { showToast('From Date cannot be after To Date', 'error'); return; }
+
   const tbody = document.getElementById('examsRepBody');
-  tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
   try {
-    allExamsData = await fetchAllRows('exams',
-      'exam_ref, subject, batch, standard, medium, exam_type, exam_date, status, branches(name)',
-      'exam_date');
+    const { data, error } = await db
+      .from('exams')
+      .select(`exam_ref, subject, batch, exam_date, status, branch_id,
+               branches(name),
+               exam_supervisors(supervisors(name)),
+               corrector_batches(due_date, return_date)`)
+      .gte('exam_date', from)
+      .lte('exam_date', to)
+      .order('exam_date', { ascending: false });
+    if (error) throw error;
+    allExamsData = data || [];
+
     fillSelect('exFilCenter',  uniqSorted(allExamsData.map(e => e.branches?.name)));
     fillSelect('exFilSubject', uniqSorted(allExamsData.map(e => e.subject)));
     fillSelect('exFilBatch',   uniqSorted(allExamsData.map(e => e.batch)));
     renderExamsReport();
   } catch (e) {
     showToast('Error loading exams: ' + e.message, 'error');
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
   }
 }
 
@@ -1257,7 +1304,7 @@ function renderExamsReport() {
     if (su && (e.subject || '') !== su) return false;
     if (ba && (e.batch || '') !== ba) return false;
     if (q) {
-      const hay = `${e.exam_ref || ''} ${e.subject || ''} ${e.batch || ''}`.toLowerCase();
+      const hay = `${e.exam_ref || ''} ${e.subject || ''} ${e.batch || ''} ${examSupervisors(e)}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -1266,7 +1313,7 @@ function renderExamsReport() {
   document.getElementById('exCount').textContent = `(${examsFiltered.length})`;
   const tbody = document.getElementById('examsRepBody');
   if (!examsFiltered.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No exams match these filters</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No exams match these filters</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = examsFiltered.map(e => {
@@ -1276,9 +1323,10 @@ function renderExamsReport() {
       <td>${e.branches?.name || '—'}</td>
       <td>${e.subject || '—'}</td>
       <td style="font-size:12px">${e.batch || '—'}</td>
-      <td>${e.standard ?? '—'}</td>
-      <td>${e.medium || '—'}</td>
+      <td>${examSupervisors(e)}</td>
       <td>${fmtDMY(e.exam_date)}</td>
+      <td>${fmtDMY(examDueDate(e))}</td>
+      <td>${fmtDMY(examReturnDate(e))}</td>
       <td><span class="badge ${s.cls}">${s.label}</span></td>
     </tr>`;
   }).join('');
@@ -1286,10 +1334,11 @@ function renderExamsReport() {
 
 function exportExamsCSV() {
   if (!examsFiltered.length) { showToast('Nothing to export', 'error'); return; }
-  const header = ['Exam Ref', 'Center', 'Subject', 'Batch', 'Standard', 'Medium', 'Exam Date', 'Status'];
+  const header = ['Exam Ref', 'Center', 'Subject', 'Batch', 'Supervisors', 'Exam Date', 'Due Date', 'Return Date', 'Status'];
   const rows = examsFiltered.map(e => [
     e.exam_ref || '', e.branches?.name || '', e.subject || '', e.batch || '',
-    e.standard ?? '', e.medium || '', e.exam_date || '',
+    examSupervisors(e) === '—' ? '' : examSupervisors(e),
+    e.exam_date || '', examDueDate(e) || '', examReturnDate(e) || '',
     EXAM_STATUS[e.status]?.label || e.status || '',
   ]);
   downloadCSV(header, rows, 'all-exams');
