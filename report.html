@@ -395,8 +395,8 @@ function exportReportCSV() {
 
 // ── REPORTS: sub-tab switching ──
 function showRepTab(name, el) {
-  document.querySelectorAll('#tab-reports .rep-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#tab-reports .tabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#reportRoot .rep-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#reportRoot .tabs .tab').forEach(t => t.classList.remove('active'));
   document.getElementById('rep-' + name).classList.add('active');
   if (el) el.classList.add('active');
   if (name === 'exams'     && allExamsData     === null) loadAllExamsReport();
