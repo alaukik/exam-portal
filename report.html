@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Exam Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    body { background:var(--grey-light, #f4f5f7); }
+    .report-topbar { background:var(--navy, #1f2a44); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:10px; }
+    .report-topbar .brand { font-size:16px; font-weight:700; }
+    .report-topbar .sub { font-size:12px; opacity:.8; margin-left:4px; }
+    .report-wrap { max-width:1200px; margin:0 auto; padding:24px 16px 60px; }
+    .tabs { display:flex; gap:2px; border-bottom:2px solid var(--border); margin-bottom:20px; overflow-x:auto; }
+    .tab { padding:10px 18px; font-size:13px; font-weight:500; color:var(--text-sub); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+    .tab.active { color:var(--navy); border-bottom-color:var(--navy); font-weight:600; }
+    .rep-pane { display:none; }
+    .rep-pane.active { display:block; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .grid-2 { grid-template-columns:1fr; } }
+    .badge-overdue  { background:#fde8e8; color:#c0392b; }
+    .badge-progress { background:#fff4e0; color:#b9770e; }
+    /* Password gate */
+    .gate { position:fixed; inset:0; z-index:500; background:var(--navy, #1f2a44); display:none; align-items:center; justify-content:center; }
+    .gate-card { background:#fff; border-radius:12px; padding:32px 28px; width:100%; max-width:360px; margin:16px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.3); }
+    .gate-card h1 { font-size:18px; margin:0 0 4px; color:var(--text, #1a1a1a); }
+    .gate-card p { font-size:13px; color:var(--text-sub, #666); margin:0 0 20px; }
+    .gate-card input { width:100%; padding:11px 14px; border:1px solid var(--border, #ddd); border-radius:8px; font-size:14px; margin-bottom:12px; box-sizing:border-box; }
+    .gate-err { color:#c0392b; font-size:12px; margin-bottom:12px; display:none; }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <span class="material-symbols-outlined" style="font-size:34px;color:var(--navy)">lock</span>
+    <h1>Exam Reports</h1>
+    <p>Enter the access password to view reports.</p>
+    <input type="password" id="gatePass" placeholder="Password" autocomplete="off"/>
+    <div class="gate-err" id="gateErr">Incorrect password. Try again.</div>
+    <button class="btn btn-primary" style="width:100%" onclick="unlockReports()">
+      <span class="material-symbols-outlined">login</span> View Reports
+    </button>
+  </div>
+</div>
+
+<header class="report-topbar">
+  <span class="material-symbols-outlined" style="font-size:20px">summarize</span>
+  <span class="brand">Exam Portal</span>
+  <span class="sub">Reports</span>
+</header>
+
+<main class="report-wrap" id="reportRoot">
+      <div class="tabs">
+        <div class="tab active" onclick="showRepTab('summary', this)">Branch Summary</div>
+        <div class="tab" onclick="showRepTab('exams', this)">All Exams</div>
+        <div class="tab" onclick="showRepTab('corrector', this)">Corrector Report</div>
+      </div>
+
+      <div class="rep-pane active" id="rep-summary">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">filter_alt</span> Branch-wise Exam Summary</h2>
+        </div>
+        <div class="card-body">
+          <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr auto;align-items:end;gap:12px">
+            <div class="form-group" style="margin:0">
+              <label>From Date</label>
+              <input type="date" id="repDateFrom"/>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>To Date</label>
+              <input type="date" id="repDateTo"/>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Branch</label>
+              <select id="repBranch">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="generateReport()">
+                <span class="material-symbols-outlined">play_arrow</span> Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="material-symbols-outlined">summarize</span> Report</h2>
+          <button class="btn btn-outline btn-sm" id="repExportBtn" style="display:none" onclick="exportReportCSV()">
+            <span class="material-symbols-outlined">download</span> Export CSV
+          </button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Branch</th><th>Total</th><th>Pending</th><th>Overdue</th>
+                  <th>In Progress</th><th>Not Distributed</th><th>Complete</th>
+                </tr>
+              </thead>
+              <tbody id="reportBody">
+                <tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">summarize</span><p>Set your filters and click Generate</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div><!-- /rep-summary -->
+
+      <!-- PANE: ALL EXAMS -->
+      <div class="rep-pane" id="rep-exams">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-symbols-outlined">table_view</span> All Exams</h2>
+            <button class="btn btn-outline btn-sm" onclick="exportExamsCSV()">
+              <span class="material-symbols-outlined">download</span> Export CSV
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="grid-2" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-items:end;gap:10px">
+              <div class="form-group" style="margin:0">
+                <label>From Date</label>
+                <input type="date" id="exFromDate" onchange="loadAllExamsReport()"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>To Date</label>
+                <input type="date" id="exToDate" onchange="loadAllExamsReport()"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Status</label>
+                <select id="exFilStatus" onchange="renderExamsReport()">
+                  <option value="">All</option>
+                  <option value="pending">Pending</option>
+                  <option value="progress">In Progress</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="not_distributed">Not Distributed</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Center</label>
+                <select id="exFilCenter" onchange="renderExamsReport()"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Subject</label>
+                <select id="exFilSubject" onchange="renderExamsReport()"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Batch</label>
+                <select id="exFilBatch" onchange="renderExamsReport()"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Search</label>
+                <input type="text" id="exFilSearch" placeholder="Exam ref / subject" oninput="renderExamsReport()"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-symbols-outlined">list_alt</span> Exams <span id="exCount" style="color:var(--text-sub);font-weight:400;font-size:12px"></span></h2>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Exam Ref</th><th>Center</th><th>Subject</th><th>Batch</th><th>Supervisor(s)</th><th>Exam Date</th><th>Due</th><th>Return</th><th>Status</th></tr>
+                </thead>
+                <tbody id="examsRepBody">
+                  <tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /rep-exams -->
+
+      <!-- PANE: CORRECTOR REPORT -->
+      <div class="rep-pane" id="rep-corrector">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-symbols-outlined">draw</span> Corrector Report</h2>
+            <button class="btn btn-outline btn-sm" onclick="exportCorrectorCSV()">
+              <span class="material-symbols-outlined">download</span> Export CSV
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1.4fr;align-items:end;gap:10px">
+              <div class="form-group" style="margin:0">
+                <label>Center</label>
+                <select id="coFilCenter" onchange="renderCorrectorReport()"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Corrector</label>
+                <select id="coFilCorrector" onchange="renderCorrectorReport()"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Returned?</label>
+                <select id="coFilReturned" onchange="renderCorrectorReport()">
+                  <option value="">All</option>
+                  <option value="yes">Returned</option>
+                  <option value="no">Not returned</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Search</label>
+                <input type="text" id="coFilSearch" placeholder="Exam / subject / corrector" oninput="renderCorrectorReport()"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-symbols-outlined">assignment_ind</span> Corrector Batches <span id="coCount" style="color:var(--text-sub);font-weight:400;font-size:12px"></span></h2>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Corrector</th><th>Exam</th><th>Subject</th><th>Batch</th><th>Sent</th><th>Due</th><th>Returned</th><th>Days (Due&rarr;Return)</th></tr>
+                </thead>
+                <tbody id="corrRepBody">
+                  <tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /rep-corrector -->
+
+</main>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-helpers.js"></script>
+
+<script>
+// ===== PASSWORD =====  change this to whatever you want
+const REPORT_PASSWORD = 'changeme';
+// ====================
+
+let allBranches = [];
+
+// Fallback toast in case config.js does not define one
+if (typeof showToast !== 'function') {
+  window.showToast = (msg, type) => console.log('[' + (type || 'info') + '] ' + msg);
+}
+
+// ── REPORTS ──
+const REPORT_STATUSES = [
+  { key: 'pending',         label: 'Pending' },
+  { key: 'overdue',         label: 'Overdue' },
+  { key: 'progress',        label: 'In Progress' },
+  { key: 'not_distributed', label: 'Not Distributed' },
+  { key: 'complete',        label: 'Complete' },
+];
+
+let reportRows    = [];   // computed rows, kept for CSV export
+let reportContext = {};   // filter context, used in CSV filename
+
+function initReports() {
+  const sel = document.getElementById('repBranch');
+  if (sel.options.length <= 1) {
+    sel.innerHTML = '<option value="">All Branches</option>' +
+      allBranches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  }
+}
+
+async function generateReport() {
+  const dateFrom = document.getElementById('repDateFrom').value;
+  const dateTo   = document.getElementById('repDateTo').value;
+  const branchId = document.getElementById('repBranch').value;
+
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    showToast('From Date cannot be after To Date', 'error');
+    return;
+  }
+
+  const tbody = document.getElementById('reportBody');
+  tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Generating...</p></div></td></tr>`;
+
+  const filters = {};
+  if (branchId) filters.branch_id = branchId;
+  if (dateFrom) filters.date_from = dateFrom;
+  if (dateTo)   filters.date_to   = dateTo;
+
+  try {
+    const exams = await getExams(filters);
+
+    // Seed every relevant branch with zero counts so empty branches still show
+    const branchesToShow = branchId ? allBranches.filter(b => b.id === branchId) : allBranches;
+    const map = {};
+    branchesToShow.forEach(b => {
+      map[b.id] = { branch: b.name, total: 0, pending:0, overdue:0, progress:0, not_distributed:0, complete:0 };
+    });
+
+    exams.forEach(e => {
+      const row = map[e.branch_id];
+      if (!row) return;
+      row.total++;
+      if (row[e.status] !== undefined) row[e.status]++;
+    });
+
+    reportRows = Object.values(map).sort((a, b) => a.branch.localeCompare(b.branch));
+    reportContext = { dateFrom, dateTo, branchName: branchId ? (allBranches.find(b => b.id === branchId)?.name || 'Branch') : 'All Branches' };
+
+    renderReport();
+  } catch (e) {
+    showToast('Error generating report: ' + e.message, 'error');
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not generate report</p></div></td></tr>`;
+  }
+}
+
+function renderReport() {
+  const tbody = document.getElementById('reportBody');
+  const exportBtn = document.getElementById('repExportBtn');
+
+  if (!reportRows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No exams found for these filters</p></div></td></tr>`;
+    exportBtn.style.display = 'none';
+    return;
+  }
+
+  const totals = { total:0, pending:0, overdue:0, progress:0, not_distributed:0, complete:0 };
+  reportRows.forEach(r => REPORT_STATUSES.forEach(s => { totals[s.key] += r[s.key]; }));
+  reportRows.forEach(r => totals.total += r.total);
+
+  const badge = (v, cls) => v > 0 ? `<span class="badge ${cls}">${v}</span>` : '<span style="color:var(--text-sub)">0</span>';
+
+  tbody.innerHTML = reportRows.map(r => `
+    <tr>
+      <td><strong>${r.branch}</strong></td>
+      <td><span class="badge badge-navy">${r.total}</span></td>
+      <td>${badge(r.pending, 'badge-pending')}</td>
+      <td>${badge(r.overdue, 'badge-overdue')}</td>
+      <td>${badge(r.progress, 'badge-progress')}</td>
+      <td>${badge(r.not_distributed, 'badge-pending')}</td>
+      <td>${badge(r.complete, 'badge-complete')}</td>
+    </tr>`).join('') + `
+    <tr style="background:var(--grey-light);font-weight:700">
+      <td><strong>Total</strong></td>
+      <td>${totals.total}</td>
+      <td>${totals.pending}</td>
+      <td>${totals.overdue}</td>
+      <td>${totals.progress}</td>
+      <td>${totals.not_distributed}</td>
+      <td>${totals.complete}</td>
+    </tr>`;
+
+  exportBtn.style.display = 'flex';
+}
+
+function exportReportCSV() {
+  if (!reportRows.length) { showToast('Nothing to export', 'error'); return; }
+
+  const header = ['Branch','Total','Pending','Overdue','In Progress','Not Distributed','Complete'];
+  const lines  = [header.join(',')];
+
+  const csvCell = v => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  reportRows.forEach(r => {
+    lines.push([r.branch, r.total, r.pending, r.overdue, r.progress, r.not_distributed, r.complete].map(csvCell).join(','));
+  });
+
+  const totals = { total:0, pending:0, overdue:0, progress:0, not_distributed:0, complete:0 };
+  reportRows.forEach(r => { totals.total+=r.total; totals.pending+=r.pending; totals.overdue+=r.overdue; totals.progress+=r.progress; totals.not_distributed+=r.not_distributed; totals.complete+=r.complete; });
+  lines.push(['Total', totals.total, totals.pending, totals.overdue, totals.progress, totals.not_distributed, totals.complete].map(csvCell).join(','));
+
+  const range = (reportContext.dateFrom || reportContext.dateTo)
+    ? `_${reportContext.dateFrom || 'start'}_to_${reportContext.dateTo || 'end'}` : '';
+  const branchPart = (reportContext.branchName || 'all').replace(/[^a-z0-9]+/gi, '-');
+  const filename = `exam-summary_${branchPart}${range}.csv`;
+
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Report exported', 'success');
+}
+
+// ── REPORTS: sub-tab switching ──
+function showRepTab(name, el) {
+  document.querySelectorAll('#tab-reports .rep-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#tab-reports .tabs .tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('rep-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'exams'     && allExamsData     === null) loadAllExamsReport();
+  if (name === 'corrector' && correctorRepData === null) loadCorrectorReport();
+}
+
+// ── REPORTS: shared helpers ──
+// Fetch ALL rows from a table, paging past the 1000-row response cap.
+async function fetchAllRows(table, selectStr, orderCol) {
+  const pageSize = 1000;
+  let from = 0, all = [];
+  while (true) {
+    let q = db.from(table).select(selectStr).range(from, from + pageSize - 1);
+    if (orderCol) q = q.order(orderCol, { ascending: false });
+    const { data, error } = await q;
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
+function uniqSorted(arr) {
+  return [...new Set(arr.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function fillSelect(id, values) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All</option>' +
+    values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}">${v}</option>`).join('');
+  if (values.includes(cur)) sel.value = cur;
+}
+
+function fmtDMY(s) {
+  if (!s) return '—';
+  const p = String(s).split('T')[0].split('-');
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : s;
+}
+
+function daysDueToReturn(due, ret) {
+  if (!due || !ret) return null;
+  const d = new Date(due), r = new Date(ret);
+  if (isNaN(d) || isNaN(r)) return null;
+  return Math.round((r - d) / 86400000);
+}
+
+function daysCell(due, ret) {
+  const n = daysDueToReturn(due, ret);
+  if (n === null) return '<span style="color:var(--text-sub)">— not returned</span>';
+  const color = n > 0 ? '#c0392b' : (n < 0 ? '#1a7f4b' : 'var(--text-sub)');
+  const lbl = n > 0 ? `${n} day${n > 1 ? 's' : ''} late`
+            : (n < 0 ? `${Math.abs(n)} day${Math.abs(n) > 1 ? 's' : ''} early` : 'on time');
+  return `<span style="color:${color};font-weight:600">${lbl}</span>`;
+}
+
+function csvCell(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCSV(header, rows, name) {
+  const lines = [header.map(csvCell).join(',')].concat(rows.map(r => r.map(csvCell).join(',')));
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${name}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Exported', 'success');
+}
+
+// ── REPORT: ALL EXAMS ──
+const EXAM_STATUS = {
+  pending:         { label: 'Pending',         cls: 'badge-pending'  },
+  progress:        { label: 'In Progress',     cls: 'badge-progress' },
+  overdue:         { label: 'Overdue',         cls: 'badge-overdue'  },
+  not_distributed: { label: 'Not Distributed', cls: 'badge-pending'  },
+  complete:        { label: 'Complete',        cls: 'badge-complete' },
+};
+
+let allExamsData  = null;
+let examsFiltered = [];
+
+// Default the date range to the last two weeks (today − 14 days → today)
+function setDefaultExamDates() {
+  const fromEl = document.getElementById('exFromDate');
+  const toEl   = document.getElementById('exToDate');
+  if (fromEl.value && toEl.value) return;
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const to = new Date();
+  const from = new Date(); from.setDate(from.getDate() - 14);
+  fromEl.value = fmt(from);
+  toEl.value   = fmt(to);
+}
+
+// Per-exam rollups across this exam's batches / supervisors
+function examSupervisors(e) {
+  return (e.exam_supervisors || []).map(s => s.supervisors?.name).filter(Boolean).join(', ') || '—';
+}
+function examDueDate(e) {            // earliest due date across batches
+  const ds = (e.corrector_batches || []).map(b => b.due_date).filter(Boolean).sort();
+  return ds.length ? ds[0] : null;
+}
+function examReturnDate(e) {         // latest return date across batches
+  const rs = (e.corrector_batches || []).map(b => b.return_date).filter(Boolean).sort();
+  return rs.length ? rs[rs.length - 1] : null;
+}
+
+async function loadAllExamsReport() {
+  setDefaultExamDates();
+  const from = document.getElementById('exFromDate').value;
+  const to   = document.getElementById('exToDate').value;
+  if (from && to && from > to) { showToast('From Date cannot be after To Date', 'error'); return; }
+
+  const tbody = document.getElementById('examsRepBody');
+  tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
+  try {
+    const { data, error } = await db
+      .from('exams')
+      .select(`exam_ref, subject, batch, exam_date, status, branch_id,
+               branches(name),
+               exam_supervisors(supervisors(name)),
+               corrector_batches(due_date, return_date)`)
+      .gte('exam_date', from)
+      .lte('exam_date', to)
+      .order('exam_date', { ascending: false });
+    if (error) throw error;
+    allExamsData = data || [];
+
+    fillSelect('exFilCenter',  uniqSorted(allExamsData.map(e => e.branches?.name)));
+    fillSelect('exFilSubject', uniqSorted(allExamsData.map(e => e.subject)));
+    fillSelect('exFilBatch',   uniqSorted(allExamsData.map(e => e.batch)));
+    renderExamsReport();
+  } catch (e) {
+    showToast('Error loading exams: ' + e.message, 'error');
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
+  }
+}
+
+function renderExamsReport() {
+  if (!allExamsData) return;
+  const st = document.getElementById('exFilStatus').value;
+  const ce = document.getElementById('exFilCenter').value;
+  const su = document.getElementById('exFilSubject').value;
+  const ba = document.getElementById('exFilBatch').value;
+  const q  = document.getElementById('exFilSearch').value.trim().toLowerCase();
+
+  examsFiltered = allExamsData.filter(e => {
+    if (st && e.status !== st) return false;
+    if (ce && (e.branches?.name || '') !== ce) return false;
+    if (su && (e.subject || '') !== su) return false;
+    if (ba && (e.batch || '') !== ba) return false;
+    if (q) {
+      const hay = `${e.exam_ref || ''} ${e.subject || ''} ${e.batch || ''} ${examSupervisors(e)}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('exCount').textContent = `(${examsFiltered.length})`;
+  const tbody = document.getElementById('examsRepBody');
+  if (!examsFiltered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No exams match these filters</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = examsFiltered.map(e => {
+    const s = EXAM_STATUS[e.status] || { label: e.status, cls: 'badge-navy' };
+    return `<tr>
+      <td><strong>${e.exam_ref || '—'}</strong></td>
+      <td>${e.branches?.name || '—'}</td>
+      <td>${e.subject || '—'}</td>
+      <td style="font-size:12px">${e.batch || '—'}</td>
+      <td>${examSupervisors(e)}</td>
+      <td>${fmtDMY(e.exam_date)}</td>
+      <td>${fmtDMY(examDueDate(e))}</td>
+      <td>${fmtDMY(examReturnDate(e))}</td>
+      <td><span class="badge ${s.cls}">${s.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportExamsCSV() {
+  if (!examsFiltered.length) { showToast('Nothing to export', 'error'); return; }
+  const header = ['Exam Ref', 'Center', 'Subject', 'Batch', 'Supervisors', 'Exam Date', 'Due Date', 'Return Date', 'Status'];
+  const rows = examsFiltered.map(e => [
+    e.exam_ref || '', e.branches?.name || '', e.subject || '', e.batch || '',
+    examSupervisors(e) === '—' ? '' : examSupervisors(e),
+    e.exam_date || '', examDueDate(e) || '', examReturnDate(e) || '',
+    EXAM_STATUS[e.status]?.label || e.status || '',
+  ]);
+  downloadCSV(header, rows, 'all-exams');
+}
+
+// ── REPORT: CORRECTOR ──
+let correctorRepData  = null;
+let correctorFiltered = [];
+
+async function loadCorrectorReport() {
+  const tbody = document.getElementById('corrRepBody');
+  tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
+  try {
+    correctorRepData = await fetchAllRows('corrector_batches',
+      'sent_date, due_date, return_date, correctors(name), exams(exam_ref, subject, batch, branches(name))',
+      'due_date');
+    fillSelect('coFilCenter',    uniqSorted(correctorRepData.map(b => b.exams?.branches?.name)));
+    fillSelect('coFilCorrector', uniqSorted(correctorRepData.map(b => b.correctors?.name)));
+    renderCorrectorReport();
+  } catch (e) {
+    showToast('Error loading corrector report: ' + e.message, 'error');
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
+  }
+}
+
+function renderCorrectorReport() {
+  if (!correctorRepData) return;
+  const ce = document.getElementById('coFilCenter').value;
+  const co = document.getElementById('coFilCorrector').value;
+  const rt = document.getElementById('coFilReturned').value;
+  const q  = document.getElementById('coFilSearch').value.trim().toLowerCase();
+
+  correctorFiltered = correctorRepData.filter(b => {
+    if (ce && (b.exams?.branches?.name || '') !== ce) return false;
+    if (co && (b.correctors?.name || '') !== co) return false;
+    if (rt === 'yes' && !b.return_date) return false;
+    if (rt === 'no'  &&  b.return_date) return false;
+    if (q) {
+      const hay = `${b.exams?.exam_ref || ''} ${b.exams?.subject || ''} ${b.correctors?.name || ''} ${b.exams?.batch || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('coCount').textContent = `(${correctorFiltered.length})`;
+  const tbody = document.getElementById('corrRepBody');
+  if (!correctorFiltered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No batches match these filters</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = correctorFiltered.map(b => `
+    <tr>
+      <td><strong>${b.correctors?.name || '—'}</strong></td>
+      <td>${b.exams?.exam_ref || '—'}</td>
+      <td>${b.exams?.subject || '—'}</td>
+      <td style="font-size:12px">${b.exams?.batch || '—'}</td>
+      <td>${fmtDMY(b.sent_date)}</td>
+      <td>${fmtDMY(b.due_date)}</td>
+      <td>${fmtDMY(b.return_date)}</td>
+      <td>${daysCell(b.due_date, b.return_date)}</td>
+    </tr>`).join('');
+}
+
+function exportCorrectorCSV() {
+  if (!correctorFiltered.length) { showToast('Nothing to export', 'error'); return; }
+  const header = ['Corrector', 'Exam', 'Subject', 'Batch', 'Center', 'Sent Date', 'Due Date', 'Return Date', 'Days Due to Return'];
+  const rows = correctorFiltered.map(b => {
+    const n = daysDueToReturn(b.due_date, b.return_date);
+    return [
+      b.correctors?.name || '', b.exams?.exam_ref || '', b.exams?.subject || '',
+      b.exams?.batch || '', b.exams?.branches?.name || '',
+      b.sent_date || '', b.due_date || '', b.return_date || '',
+      n === null ? 'not returned' : n,
+    ];
+  });
+  downloadCSV(header, rows, 'corrector-report');
+}
+
+
+// ── PASSWORD GATE + INIT ──
+function showGate(show) { document.getElementById('gate').style.display = show ? 'flex' : 'none'; }
+
+function unlockReports() {
+  const v = document.getElementById('gatePass').value;
+  if (v === REPORT_PASSWORD) {
+    sessionStorage.setItem('reportUnlocked', '1');
+    showGate(false);
+    bootReports();
+  } else {
+    document.getElementById('gateErr').style.display = 'block';
+  }
+}
+
+let booted = false;
+async function bootReports() {
+  if (booted) return;
+  booted = true;
+  try { allBranches = await getBranches(); }
+  catch (e) { allBranches = []; showToast('Could not load branches: ' + e.message, 'error'); }
+  initReports();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const passEl = document.getElementById('gatePass');
+  passEl.addEventListener('keydown', e => { if (e.key === 'Enter') unlockReports(); });
+  if (sessionStorage.getItem('reportUnlocked') === '1') {
+    showGate(false);
+    bootReports();
+  } else {
+    showGate(true);
+    passEl.focus();
+  }
+});
+</script>
+
+</body>
+</html>
