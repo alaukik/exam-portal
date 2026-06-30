@@ -69,15 +69,15 @@
           <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr auto;align-items:end;gap:12px">
             <div class="form-group" style="margin:0">
               <label>From Date</label>
-              <input type="date" id="repDateFrom"/>
+              <input type="date" id="repDateFrom" onchange="generateReport()"/>
             </div>
             <div class="form-group" style="margin:0">
               <label>To Date</label>
-              <input type="date" id="repDateTo"/>
+              <input type="date" id="repDateTo" onchange="generateReport()"/>
             </div>
             <div class="form-group" style="margin:0">
               <label>Branch</label>
-              <select id="repBranch">
+              <select id="repBranch" onchange="generateReport()">
                 <option value="">All Branches</option>
               </select>
             </div>
@@ -276,6 +276,25 @@ function initReports() {
   }
 }
 
+// Paginated fetch for the summary — only branch_id + status are needed.
+// Pages past the 1000-row response cap so wide ranges aren't truncated.
+async function fetchExamsForSummary(filters) {
+  const pageSize = 1000;
+  let from = 0, all = [];
+  while (true) {
+    let q = db.from('exams').select('branch_id, status').range(from, from + pageSize - 1);
+    if (filters.branch_id) q = q.eq('branch_id', filters.branch_id);
+    if (filters.date_from) q = q.gte('exam_date', filters.date_from);
+    if (filters.date_to)   q = q.lte('exam_date', filters.date_to);
+    const { data, error } = await q;
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
 async function generateReport() {
   const dateFrom = document.getElementById('repDateFrom').value;
   const dateTo   = document.getElementById('repDateTo').value;
@@ -295,7 +314,7 @@ async function generateReport() {
   if (dateTo)   filters.date_to   = dateTo;
 
   try {
-    const exams = await getExams(filters);
+    const exams = await fetchExamsForSummary(filters);
 
     // Seed every relevant branch with zero counts so empty branches still show
     const branchesToShow = branchId ? allBranches.filter(b => b.id === branchId) : allBranches;
