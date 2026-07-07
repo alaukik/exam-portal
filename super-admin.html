@@ -438,10 +438,10 @@
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Corrector</th><th>Exam</th><th>Subject</th><th>Batch</th><th>Sent</th><th>Due</th><th>Returned</th><th>Days (Due&rarr;Return)</th></tr>
+                  <tr><th>Corrector</th><th>Exam</th><th>Subject</th><th>Batch</th><th>Marks</th><th>Sent</th><th>Due</th><th>Returned</th><th>Papers Ret.</th><th>Days (Due&rarr;Return)</th></tr>
                 </thead>
                 <tbody id="corrRepBody">
-                  <tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
+                  <tr><td colspan="10"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>
                 </tbody>
               </table>
             </div>
@@ -1425,17 +1425,17 @@ let correctorFiltered = [];
 
 async function loadCorrectorReport() {
   const tbody = document.getElementById('corrRepBody');
-  tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>`;
   try {
     correctorRepData = await fetchAllRows('corrector_batches',
-      'sent_date, due_date, return_date, correctors(name), exams(exam_ref, subject, batch, branches(name))',
+      'sent_date, due_date, return_date, section_marks, papers_received, correctors(name), exams(exam_ref, subject, batch, branches(name))',
       'due_date');
     fillSelect('coFilCenter',    uniqSorted(correctorRepData.map(b => b.exams?.branches?.name)));
     fillSelect('coFilCorrector', uniqSorted(correctorRepData.map(b => b.correctors?.name)));
     renderCorrectorReport();
   } catch (e) {
     showToast('Error loading corrector report: ' + e.message, 'error');
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>`;
   }
 }
 
@@ -1464,7 +1464,7 @@ function renderCorrectorReport() {
   document.getElementById('coCount').textContent = `(${correctorFiltered.length})`;
   const tbody = document.getElementById('corrRepBody');
   if (!correctorFiltered.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No batches match these filters</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No batches match these filters</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = correctorFiltered.map(b => `
@@ -1473,22 +1473,24 @@ function renderCorrectorReport() {
       <td>${b.exams?.exam_ref || '—'}</td>
       <td>${b.exams?.subject || '—'}</td>
       <td style="font-size:12px">${b.exams?.batch || '—'}</td>
+              <td>${b.section_marks ?? '—'}</td>
       <td>${fmtDMY(b.sent_date)}</td>
       <td>${fmtDMY(b.due_date)}</td>
       <td>${fmtDMY(b.return_date)}</td>
+              <td>${b.papers_received ?? '—'}</td>
       <td>${daysCell(b.due_date, b.return_date)}</td>
     </tr>`).join('');
 }
 
 function exportCorrectorCSV() {
   if (!correctorFiltered.length) { showToast('Nothing to export', 'error'); return; }
-  const header = ['Corrector', 'Exam', 'Subject', 'Batch', 'Center', 'Sent Date', 'Due Date', 'Return Date', 'Days Due to Return'];
+  const header = ['Corrector', 'Exam', 'Subject', 'Batch', 'Marks', 'Center', 'Sent Date', 'Due Date', 'Return Date', 'Papers Returned', 'Days Due to Return'];
   const rows = correctorFiltered.map(b => {
     const n = daysDueToReturn(b.due_date, b.return_date);
     return [
       b.correctors?.name || '', b.exams?.exam_ref || '', b.exams?.subject || '',
-      b.exams?.batch || '', b.exams?.branches?.name || '',
-      b.sent_date || '', b.due_date || '', b.return_date || '',
+      b.exams?.batch || '', b.section_marks ?? '', b.exams?.branches?.name || '',
+      b.sent_date || '', b.due_date || '', b.return_date || '', b.papers_received ?? '',
       n === null ? 'not returned' : n,
     ];
   });
