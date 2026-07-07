@@ -195,7 +195,7 @@
             </button>
           </div>
           <div class="card-body">
-            <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1.4fr;align-items:end;gap:10px">
+            <div class="grid-2" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-items:end;gap:10px">
               <div class="form-group" style="margin:0">
                 <label>Center</label>
                 <select id="coFilCenter" onchange="renderCorrectorReport()"><option value="">All</option></select>
@@ -205,13 +205,13 @@
                 <select id="coFilCorrector" onchange="renderCorrectorReport()"><option value="">All</option></select>
               </div>
               <div class="form-group" style="margin:0">
-                <label>Returned?</label>
-                <select id="coFilReturned" onchange="renderCorrectorReport()">
-                  <option value="">All</option>
-                  <option value="yes">Returned</option>
-                  <option value="no">Not returned</option>
-                </select>
-              </div>
+                  <label>From (Return)</label>
+                  <input type="date" id="coFrom" onchange="renderCorrectorReport()"/>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label>To (Return)</label>
+                  <input type="date" id="coTo" onchange="renderCorrectorReport()"/>
+                </div>
               <div class="form-group" style="margin:0">
                 <label>Search</label>
                 <input type="text" id="coFilSearch" placeholder="Exam / subject / corrector" oninput="renderCorrectorReport()"/>
@@ -250,8 +250,8 @@
           </div>
           <div class="card-body">
             <div class="grid-2" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-items:end;gap:10px">
-              <div class="form-group" style="margin:0"><label>From Date</label><input type="date" id="cpFrom" onchange="renderCorrectorPay()"/></div>
-              <div class="form-group" style="margin:0"><label>To Date</label><input type="date" id="cpTo" onchange="renderCorrectorPay()"/></div>
+              <div class="form-group" style="margin:0"><label>From (Return)</label><input type="date" id="cpFrom" onchange="renderCorrectorPay()"/></div>
+              <div class="form-group" style="margin:0"><label>To (Return)</label><input type="date" id="cpTo" onchange="renderCorrectorPay()"/></div>
               <div class="form-group" style="margin:0"><label>Center</label><select id="cpCenter" onchange="renderCorrectorPay()"><option value="">All</option></select></div>
               <div class="form-group" style="margin:0"><label>Corrector</label><select id="cpCorrector" onchange="renderCorrectorPay()"><option value="">All</option></select></div>
             </div>
@@ -267,7 +267,7 @@
         <div class="card">
           <div class="card-header"><h2 class="card-title"><span class="material-symbols-outlined">list_alt</span> Detail <span id="cpDetCount" style="color:var(--text-sub);font-weight:400;font-size:12px"></span></h2></div>
           <div class="card-body" style="padding:0"><div class="table-wrap"><table>
-            <thead><tr><th>Corrector</th><th>Subject</th><th>Center</th><th>Date</th><th>Papers</th><th>Sec Marks</th><th>Rate/Mark</th><th>Amount</th></tr></thead>
+            <thead><tr><th>Corrector</th><th>Subject</th><th>Center</th><th>Return Date</th><th>Papers</th><th>Sec Marks</th><th>Rate/Mark</th><th>Amount</th></tr></thead>
             <tbody id="cpDetailBody"></tbody>
           </table></div></div>
         </div>
@@ -708,16 +708,19 @@ async function loadCorrectorReport() {
 
 function renderCorrectorReport() {
   if (!correctorRepData) return;
+  setDefaultDays('coFrom','coTo',30);
+  const from = document.getElementById('coFrom').value;
+  const to   = document.getElementById('coTo').value;
   const ce = document.getElementById('coFilCenter').value;
   const co = document.getElementById('coFilCorrector').value;
-  const rt = document.getElementById('coFilReturned').value;
   const q  = document.getElementById('coFilSearch').value.trim().toLowerCase();
 
   correctorFiltered = correctorRepData.filter(b => {
+    if (!b.return_date) return false;
+    if (from && b.return_date < from) return false;
+    if (to   && b.return_date > to)   return false;
     if (ce && (b.exams?.branches?.name || '') !== ce) return false;
     if (co && (b.correctors?.name || '') !== co) return false;
-    if (rt === 'yes' && !b.return_date) return false;
-    if (rt === 'no'  &&  b.return_date) return false;
     if (q) {
       const hay = `${b.exams?.exam_ref || ''} ${b.exams?.subject || ''} ${b.correctors?.name || ''} ${b.exams?.batch || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -777,6 +780,13 @@ function setDefaultPayDates(fromId,toId){
   f.value=fmt(new Date(now.getFullYear(),now.getMonth(),1));
   t.value=fmt(now);
 }
+function setDefaultDays(fromId,toId,days){
+  const f=document.getElementById(fromId), t=document.getElementById(toId);
+  if(f.value && t.value) return;
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const to=new Date(); const from=new Date(); from.setDate(from.getDate()-days);
+  f.value=fmt(from); t.value=fmt(to);
+}
 
 // ── CORRECTOR REMUNERATION ──
 let corrPayRaw=null, corrPaySummary=[], corrPayDetail=[];
@@ -785,7 +795,7 @@ async function loadCorrectorPay(){
   document.getElementById('cpDetailBody').innerHTML=loadingRow(8);
   try{
     const { data, error } = await db.from('corrector_remuneration')
-      .select('corrector_id, corrector_name, branch_id, branch_name, exam_date, subject, standard, section_marks, papers_received, rate_per_mark, amount');
+      .select('corrector_id, corrector_name, branch_id, branch_name, exam_date, return_date, subject, standard, section_marks, papers_received, rate_per_mark, amount');
     if(error) throw error;
     corrPayRaw=data||[];
     fillSelect('cpCenter', uniqSorted(corrPayRaw.map(r=>r.branch_name)));
@@ -801,8 +811,9 @@ function renderCorrectorPay(){
   const ce=document.getElementById('cpCenter').value, co=document.getElementById('cpCorrector').value;
 
   corrPayDetail=corrPayRaw.filter(r=>{
-    if(from && (r.exam_date||'')<from) return false;
-    if(to && (r.exam_date||'')>to) return false;
+    if(!r.return_date) return false;
+    if(from && r.return_date<from) return false;
+    if(to && r.return_date>to) return false;
     if(ce && (r.branch_name||'')!==ce) return false;
     if(co && (r.corrector_name||'')!==co) return false;
     return true;
@@ -835,7 +846,7 @@ function renderCorrectorPay(){
     +'<td><strong>'+(r.corrector_name||'\u2014')+'</strong></td>'
     +'<td>'+(r.subject||'\u2014')+(r.standard?(' ('+r.standard+')'):'')+'</td>'
     +'<td>'+(r.branch_name||'\u2014')+'</td>'
-    +'<td>'+fmtDMY(r.exam_date)+'</td>'
+    +'<td>'+fmtDMY(r.return_date)+'</td>'
     +'<td>'+(r.papers_received??'\u2014')+'</td>'
     +'<td>'+(r.section_marks??'\u2014')+'</td>'
     +'<td>'+(r.rate_per_mark??'\u2014')+'</td>'
@@ -851,8 +862,8 @@ function exportCorrPaySummary(){
 }
 function exportCorrPayDetail(){
   if(!corrPayDetail.length){ showToast('Nothing to export','error'); return; }
-  const header=['Corrector','Subject','Standard','Center','Date','Papers','Section Marks','Rate per Mark','Amount'];
-  const rows=corrPayDetail.map(r=>[r.corrector_name||'',r.subject||'',r.standard??'',r.branch_name||'',r.exam_date||'',r.papers_received??'',r.section_marks??'',r.rate_per_mark??'',num2(r.amount)]);
+  const header=['Corrector','Subject','Standard','Center','Return Date','Papers','Section Marks','Rate per Mark','Amount'];
+  const rows=corrPayDetail.map(r=>[r.corrector_name||'',r.subject||'',r.standard??'',r.branch_name||'',r.return_date||'',r.papers_received??'',r.section_marks??'',r.rate_per_mark??'',num2(r.amount)]);
   downloadCSV(header,rows,'corrector-remuneration-detail');
 }
 
