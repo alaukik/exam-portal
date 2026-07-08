@@ -769,6 +769,10 @@ function exportCorrectorCSV() {
 // ── REMUNERATION: shared helpers ──
 function money(n){ return '\u20b9' + (Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function num2(n){ return (Number(n)||0).toFixed(2); }
+function fullSubject(r){
+  const std = (r.standard!=null && r.standard!=='') ? String(r.standard).padStart(2,'0') : '';
+  return [std, r.medium, r.subject].filter(Boolean).join('-');
+}
 function parseTimeToMin(t){ if(!t) return null; const p=String(t).split(':'); if(p.length<2) return null; const h=parseInt(p[0],10), m=parseInt(p[1],10); if(isNaN(h)||isNaN(m)) return null; return h*60+m; }
 function loadingRow(c){ return '<tr><td colspan="'+c+'"><div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div></td></tr>'; }
 function errorRow(c){ return '<tr><td colspan="'+c+'"><div class="empty-state"><span class="material-symbols-outlined">error</span><p>Could not load</p></div></td></tr>'; }
@@ -797,7 +801,7 @@ async function loadCorrectorPay(){
   document.getElementById('cpDetailBody').innerHTML=loadingRow(8);
   try{
     const { data, error } = await db.from('corrector_remuneration')
-      .select('corrector_id, corrector_name, branch_id, branch_name, exam_date, return_date, subject, standard, section_marks, papers_received, rate_per_mark, amount');
+      .select('corrector_id, corrector_name, branch_id, branch_name, exam_date, return_date, subject, standard, medium, section_marks, papers_received, rate_per_mark, amount');
     if(error) throw error;
     corrPayRaw=data||[];
     fillSelect('cpCenter', uniqSorted(corrPayRaw.map(r=>r.branch_name)));
@@ -846,7 +850,7 @@ function renderCorrectorPay(){
   let dT=0;
   dB.innerHTML=corrPayDetail.map(r=>{ dT+=(r.amount||0); return '<tr>'
     +'<td><strong>'+(r.corrector_name||'\u2014')+'</strong></td>'
-    +'<td>'+(r.subject||'\u2014')+(r.standard?(' ('+r.standard+')'):'')+'</td>'
+    +'<td>'+(fullSubject(r)||'\u2014')+'</td>'
     +'<td>'+(r.branch_name||'\u2014')+'</td>'
     +'<td>'+fmtDMY(r.return_date)+'</td>'
     +'<td>'+(r.papers_received??'\u2014')+'</td>'
@@ -865,7 +869,7 @@ function exportCorrPaySummary(){
 function exportCorrPayDetail(){
   if(!corrPayDetail.length){ showToast('Nothing to export','error'); return; }
   const header=['Corrector','Subject','Standard','Center','Return Date','Papers','Section Marks','Rate per Mark','Amount'];
-  const rows=corrPayDetail.map(r=>[r.corrector_name||'',r.subject||'',r.standard??'',r.branch_name||'',r.return_date||'',r.papers_received??'',r.section_marks??'',r.rate_per_mark??'',num2(r.amount)]);
+  const rows=corrPayDetail.map(r=>[r.corrector_name||'',fullSubject(r),r.standard??'',r.branch_name||'',r.return_date||'',r.papers_received??'',r.section_marks??'',r.rate_per_mark??'',num2(r.amount)]);
   downloadCSV(header,rows,'corrector-remuneration-detail');
 }
 
